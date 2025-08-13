@@ -5,6 +5,7 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+
 import sqlite3
 
 from helpers import apology, login_required, lookup
@@ -12,6 +13,8 @@ from helpers import apology, login_required, lookup
 # Configure application
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
+db_path = os.path.join(BASE_DIR, "files", "unimak.db")
 
 # Custom filter
 # app.jinja_env.filters["usd"] = usd
@@ -22,7 +25,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure Monit database
-db = SQL("sqlite:///moneymonitor.db")
+db = SQL("sqlite:///files/unimak.db")
 
 
 @app.after_request
@@ -66,7 +69,7 @@ def login():
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
-            rows[0]["hash"], request.form.get("password")
+            rows[0]["password_hash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 400)
 
@@ -115,7 +118,7 @@ def register():
             return apology("username already taken", 400)
 
         hash_pw = generate_password_hash(password)
-        db.execute("INSERT INTO users (username, hash) VALUES (?, ?)", username, hash_pw)
+        db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, hash_pw)
 
         return redirect("/")
 
