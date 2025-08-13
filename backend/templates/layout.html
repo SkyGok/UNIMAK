@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>MONIT: {% block title %}{% endblock %}</title>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-100 text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b shadow-sm">
+        <div class="container mx-auto flex flex-wrap items-center justify-between p-4">
+            <!-- Brand -->
+            <a href="/" class="flex items-center font-bold text-xl">
+                <span class="text-orange-500">U</span>
+                <span class="text-orange-500">N</span>
+                <span class="text-orange-500">I</span>
+                <span class="text-orange-500">M</span>
+                <span class="text-orange-500">A</span>
+                <span class="text-orange-500">K</span>
+                <small class="ml-2 text-gray-500">DF</small>
+                {% if session["user_id"] %}
+                    <div class="hidden md:flex md:items-center md:gap-6">
+                            <a href="/upload" class="hover:text-orange-600">Upload</a>
+                            <a href="/projects" class="hover:text-orange-600">Projects</a>
+                            <a href="/history" class="hover:text-orange-600">History</a>
+                    </div>
+                {% endif %}
+            </a>
+
+            <!-- Menu (Desktop) -->
+            <div class="hidden md:justify-items-start md:flex md:items-center md:gap-6 ml-6 ml-auto">
+                {% if session["user_id"] %}
+                    <div class="hidden md:flex md:items-center md:gap-6 ml-auto">
+                        <a href="/settings" class="hover:text-orange-600">Settings</a>
+                        <a href="/logout" class="text-red-500 hover:text-red-600">Log Out</a>
+                    </div>
+                    
+                {% else %}
+                    <a href="/register" class="hover:text-orange-600">Register</a>
+                    <a href="/login" class="hover:text-orange-600">Log In</a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="menu-toggle" class="md:hidden p-2 rounded hover:bg-gray-100">
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden flex-col space-y-2 px-4 pb-4 md:hidden">
+            {% if session["user_id"] %}
+                <a href="/upload" class="block hover:text-orange-500">Upload</a>
+                <a href="/projects" class="block hover:text-orange-500">Projects</a>
+                <a href="/history" class="block hover:text-orange-500">History</a>
+                <a href="/settings" class="block hover:text-orange-500">Settings</a>
+                <a href="/logout" class="block text-red-500 hover:text-red-600">Log Out</a>
+            {% else %}
+                <a href="/register" class="block hover:text-blue-600">Register</a>
+                <a href="/login" class="block hover:text-blue-600">Log In</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Flash messages -->
+    {% if get_flashed_messages() %}
+        <div class="bg-orange-200 text-white text-center py-2">
+            {{ get_flashed_messages() | join(" ") }}
+        </div>
+    {% endif %}
+
+    <!-- Main content -->
+    <main class="container mx-auto flex-1 p-6">
+        {% block main %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t text-center text-gray-500 py-3">
+        &copy; {{ current_year }} MONIT - All Rights Reserved
+    </footer>
+
+    <!-- Mobile Menu Script -->
+    <script>
+        document.getElementById('menu-toggle').addEventListener('click', function () {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
