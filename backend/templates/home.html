@@ -5,14 +5,26 @@
 {% endblock %}
 
 {% block main %}
-    <table class="table flex flex-center items-center ">
+    <table class="table items-center flex flex-col min-w-full min-h-screen" >
         <thead>
-            <tr class="flex flex-center items-center gap-6">
+            <tr class="flex items-centers justify-between gap-6">
                 <th>Projects</th>
-                <th>Project Managers</th>
+                <th>Project Manager</th>
                 <th>Problem</th>
+                <th>Description</th>
                 <th>Status</th>
             </tr>
         </thead>
+        <tbody>
+            {% for p in data %}
+            <tr>
+                <td>{{ p.project }}</td>
+                <td>{{ p.manager }}</td>
+                <td>{{ p.reason }}</td>
+                <td>{{ p.description }}</td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
     </table>
 {% endblock %}

@@ -40,7 +40,21 @@ def after_request(response):
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    return render_template("home.html")
+    rows = db.execute(
+        "SELECT project_number, project_manager, reason, description FROM projects"
+    )
+
+    # If you still want to run lookup() for each:
+    data = []
+    for row in rows:
+        data.append({
+            "project": lookup(row["project_number"]) if lookup else row["project_number"],
+            "manager": lookup(row["project_manager"]) if lookup else row["project_manager"],
+            "reason": row["reason"],
+            "description": row["description"]
+        })
+
+    return render_template("home.html", data=data)
 
 
 
