@@ -4,11 +4,13 @@ from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 
 import sqlite3
 
-from helpers import apology, login_required, lookup
+from helpers import apology, login_required, lookup, get_translations
+
 
 # Configure application
 app = Flask(__name__)
@@ -40,21 +42,27 @@ def after_request(response):
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    rows = db.execute(
-        "SELECT project_number, project_manager, reason, description FROM projects"
-    )
+    rows = db.execute("""
+        SELECT 
+            p.project_number,
+            m.manager_name AS project_manager,
+            p.reason,
+            p.description
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+    """)
 
-    # If you still want to run lookup() for each:
     data = []
     for row in rows:
         data.append({
-            "project": lookup(row["project_number"]) if lookup else row["project_number"],
-            "manager": lookup(row["project_manager"]) if lookup else row["project_manager"],
+            "project": row["project_number"],
+            "manager": row["project_manager"],
             "reason": row["reason"],
             "description": row["description"]
         })
+    t = get_translations()
+    return render_template("home.html", data=data, t=t)
 
-    return render_template("home.html", data=data)
 
 
 
@@ -144,28 +152,107 @@ def register():
 @login_required
 def upload():
     """Uploading page"""
-    return render_template("upload.html")
+    if request.method == "POST":
+        project_number = request.form.get("project_number")
+        reason = request.form.get("reason")
+        description = request.form.get("description")
+        photos = request.files.getlist("photos")
 
-@app.route("/projects", methods=["GET", "POST"])
+        # Step 1: Create a unique folder based on project_number and timestamp
+        timestamp = datetime.now().strftime("%d%m%y%H%M%S")  # e.g., 1308250939
+        folder_name = f"{project_number}_{timestamp}"
+        base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
+        pictures_dir = os.path.join(base_dir, "pictures")
+
+        os.makedirs(pictures_dir, exist_ok=True)  # creates base_dir/pictures
+
+        # Step 2: Save photos inside pictures_dir
+        for idx, photo in enumerate(photos, start=1):
+            if photo and photo.filename:
+                filename = secure_filename(f"{folder_name}_{idx}.jpg")
+                photo.save(os.path.join(pictures_dir, filename))
+
+        # Step 3: Create description.txt inside base_dir
+        description_file = os.path.join(base_dir, f"{folder_name}.txt")
+        with open(description_file, "w", encoding="utf-8") as f:
+            f.write(f"User ID: {session['user_id']}\n")
+            f.write(f"Project Number: {project_number}\n")
+            f.write(f"Reason: {reason}\n")
+            f.write(f"Description: {description}\n")
+            f.write(f"Timestamp: {timestamp}\n")
+
+        # Step 4: Insert record into DB (if needed)
+        # db.execute("INSERT INTO projects (...) VALUES (...)", ...)
+
+        flash("Project issue reported successfully!", "success")
+        return redirect("/")
+
+    # GET request
+    projects = db.execute("SELECT id, project_number FROM projects")
+    reasons = ["Incorrect installation", "Damaged materials", "Missing components", "Design issue", "Other"]
+    return render_template("upload.html", projects=projects, reasons=reasons)
+
+@app.route("/info", methods=["GET", "POST"])
 @login_required
-def projects():
-    """Show projects"""
-    return render_template("projects.html")
+def info():
+     # Query managers and their projects
+    rows = db.execute("""
+        SELECT m.id AS manager_id, m.manager_name, p.project_number
+        FROM managers m
+        LEFT JOIN projects p ON p.manager_id = m.id
+        ORDER BY m.manager_name
+    """)
+
+    # Transform rows into a dictionary: {manager_name: [projects]}
+    data = {}
+    for row in rows:
+        manager = row["manager_name"]
+        project = row["project_number"]
+        if manager not in data:
+            data[manager] = []
+        if project:
+            data[manager].append(project)
+
+    return render_template("info.html", data=data)
     
 
 @app.route("/history", methods=["GET"])
 @login_required
 def history():
-    """Show portfolio of stocks"""
-    return render_template("history.html")
+    rows = db.execute("""
+        SELECT 
+            p.project_number, 
+            m.manager_name, 
+            p.reason, 
+            p.description, 
+            p.record_date
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+        ORDER BY p.record_date DESC
+    """)
+    t = get_translations()
+    return render_template("history.html", data=rows, t=t)
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    """Show portfolio of stocks"""
-    return render_template("settings.html")
+    if request.method == "POST":
+        # Get selected language from form
+        language = request.form.get("language")
+        
+        # Save to session (quick method)
+        session["language"] = language
 
+        # Optionally, save to database for persistent preference
+        db.execute("UPDATE users SET language = ? WHERE id = ?", language, session["user_id"])
 
+        flash("Language updated successfully!", "success")
+        return redirect("/settings")
+
+    # GET request
+    user_language = session.get("language", "en")  # default to English
+    t = get_translations()
+    return render_template("settings.html", user_language=user_language, t=t)
 
 if __name__ == "__main__":
     app.run(debug=True)

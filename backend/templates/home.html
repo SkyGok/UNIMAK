@@ -5,26 +5,40 @@
 {% endblock %}
 
 {% block main %}
-    <table class="table items-center flex flex-col min-w-full min-h-screen" >
-        <thead>
-            <tr class="flex items-centers justify-between gap-6">
-                <th>Projects</th>
-                <th>Project Manager</th>
-                <th>Problem</th>
-                <th>Description</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in data %}
-            <tr>
-                <td>{{ p.project }}</td>
-                <td>{{ p.manager }}</td>
-                <td>{{ p.reason }}</td>
-                <td>{{ p.description }}</td>
-            </tr>
-            {% endfor %}
+    <div class="p-6 bg-gray-50 min-h-screen">
+        <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Project</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Manager</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Problem</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for p in data %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ p.project }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ p.manager }}</td>
+                        <td class="px-6 py-4 text-red-500 font-semibold">{{ p.reason }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ p.description }}</td>
+                        <td class="px-6 py-4">
+                            {% if p.status == "Completed" %}
+                            <span class="bg-green-100 text-green-800 ...">Completed</span>
+                            {% elif p.status == "Pending" %}
+                            <span class="bg-yellow-100 text-yellow-800 ...">Pending</span>
+                            {% else %}
+                            <span class="bg-red-100 text-red-800 ...">Issue</span>
+                            {% endif %}
 
-        </tbody>
-    </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 {% endblock %}

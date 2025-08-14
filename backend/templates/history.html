@@ -1,9 +1,32 @@
 {% extends "layout.html" %}
 
-{% block title %}
-    History
-{% endblock %}
+{% block title %}Project History{% endblock %}
 
 {% block main %}
-    <h1 class="text-5xl text-blue-600">History</h1>
+    <div class="p-6 max-w-6xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">Project History</h1>
+
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for row in data %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ row.record_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ row.project_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ row.manager_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ row.reason }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ row.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

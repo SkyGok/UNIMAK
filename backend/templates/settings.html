@@ -1,9 +1,20 @@
 {% extends "layout.html" %}
 
-{% block title %}
-    Settings
-{% endblock %}
+{% block title %}Settings{% endblock %}
 
 {% block main %}
-    <h1 class="text-5xl text-blue-600">Settings</h1>
+    <div class="p-6 max-w-md mx-auto">
+        <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+        <form method="POST">
+            <label for="language" class="block text-sm font-medium text-gray-700 mb-2">Choose Language</label>
+            <select name="language" id="language" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                <option value="en" {% if user_language == 'en' %}selected{% endif %}>English</option>
+                <option value="tr" {% if user_language == 'tr' %}selected{% endif %}>Turkish</option>
+                <option value="es" {% if user_language == 'es' %}selected{% endif %}>Spanish</option>
+            </select>
+
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+        </form>
+    </div>
 {% endblock %}

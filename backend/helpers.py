@@ -62,3 +62,47 @@ def lookup(symbol):
     except (KeyError, ValueError) as e:
         print(f"Data parsing error: {e}")
     return None
+
+
+# Translation dictionary
+translations = {
+    "en": {
+        "upload": "Upload",
+        "history": "History",
+        "settings": "Settings",
+        "project_number": "Project Number",
+        "project_manager": "Project Manager",
+        "reason": "Reason",
+        "description": "Description",
+        "save": "Save",
+        "choose_language": "Choose Language",
+    },
+    "tr": {
+        "upload": "Yükle",
+        "history": "Geçmiş",
+        "settings": "Ayarlar",
+        "project_number": "Proje Numarası",
+        "project_manager": "Proje Yöneticisi",
+        "reason": "Sebep",
+        "description": "Açıklama",
+        "save": "Kaydet",
+        "choose_language": "Dil Seçiniz",
+    },
+    "es": {
+        "upload": "Subir",
+        "history": "Historial",
+        "settings": "Configuración",
+        "project_number": "Número de Proyecto",
+        "project_manager": "Gerente del Proyecto",
+        "reason": "Razón",
+        "description": "Descripción",
+        "save": "Guardar",
+        "choose_language": "Seleccionar Idioma",
+    }
+}
+
+def get_translations():
+    lang = session.get("language", "en")  # default English
+    return translations.get(lang, translations["en"])
+
+
