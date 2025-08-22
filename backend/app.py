@@ -195,23 +195,28 @@ def upload():
 @app.route("/info", methods=["GET", "POST"])
 @login_required
 def info():
-     # Query managers and their projects
+    # Query managers and their projects
     rows = db.execute("""
-        SELECT m.id AS manager_id, m.manager_name, p.project_number
+        SELECT m.id AS manager_id, m.manager_name,
+               p.project_number, p.reason, p.description
         FROM managers m
         LEFT JOIN projects p ON p.manager_id = m.id
-        ORDER BY m.manager_name
+        ORDER BY m.manager_name, p.project_number
     """)
 
-    # Transform rows into a dictionary: {manager_name: [projects]}
     data = {}
     for row in rows:
         manager = row["manager_name"]
-        project = row["project_number"]
+
         if manager not in data:
             data[manager] = []
-        if project:
-            data[manager].append(project)
+
+        if row["project_number"]:
+            data[manager].append({
+                "number": row["project_number"],
+                "reason": row["reason"],
+                "description": row["description"]
+            })
 
     return render_template("info.html", data=data)
     
@@ -253,6 +258,12 @@ def settings():
     user_language = session.get("language", "en")  # default to English
     t = get_translations()
     return render_template("settings.html", user_language=user_language, t=t)
+
+
+@app.route("/admin", methods=["GET", "POST"])
+@login_required
+def admin():
+    return render_template("admin.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

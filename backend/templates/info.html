@@ -3,34 +3,50 @@
 {% block title %}Manager Info{% endblock %}
 
 {% block main %}
-    <div class="p-6 max-w-4xl mx-auto">
-        <h1 class="text-2xl font-bold mb-6">Managers & Their Projects</h1>
+<div class="max-w-4xl mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-6">Managers & Projects</h1>
 
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for manager, projects in data.items() %}
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ manager }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        {% if projects %}
-                            <ul class="list-disc ml-6">
-                                {% for project in projects %}
-                                    <li>{{ project }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <span class="text-gray-400">No projects assigned</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  {% for manager, projects in data.items() %}
+  <div class="mb-4 border rounded-lg shadow-sm bg-white">
+    
+    <!-- Manager header (clickable) -->
+    <button 
+      class="w-full flex justify-between items-center px-4 py-2 text-left text-lg font-semibold bg-gray-100 hover:bg-gray-200 rounded-t-lg"
+      onclick="toggleDetails('{{ manager|replace(' ', '_') }}')">
+      {{ manager }}
+      <span>▼</span>
+    </button>
+
+    <!-- Hidden project details -->
+    <div id="details-{{ manager|replace(' ', '_') }}" class="hidden px-4 py-3 border-t">
+      {% if projects %}
+        {% for project in projects %}
+          <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+            <p><span class="font-semibold">Project #:</span> {{ project.number }}</p>
+            <p><span class="font-semibold">Reason:</span> {{ project.reason or "—" }}</p>
+            <p><span class="font-semibold">Description:</span> {{ project.description or "—" }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-gray-500">No projects assigned.</p>
+      {% endif %}
     </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+
+<script>
+    function toggleDetails(managerId) {
+        const section = document.getElementById("details-" + managerId);
+        if (section.classList.contains("hidden")) {
+            section.classList.remove("hidden");
+        } else {
+            section.classList.add("hidden");
+        }
+    }
+</script>
 {% endblock %}
+
+
