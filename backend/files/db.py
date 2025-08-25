@@ -10,7 +10,15 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    language TEXT DEFAULT 'en' 
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS managers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    manager_name TEXT NOT NULL UNIQUE
 )
 """)
 
@@ -18,14 +26,24 @@ CREATE TABLE IF NOT EXISTS users (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    project_number TEXT NOT NULL,
-    project_manager TEXT NOT NULL,
-    reason TEXT,
-    description TEXT,
-    folder_name TEXT NOT NULL,
+    project_number TEXT NOT NULL UNIQUE,
+    manager_id INTEGER NOT NULL,
     record_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (manager_id) REFERENCES managers(id)
+)
+
+""")
+
+cursor.execute("""
+CREATE TABLE problems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_number INTEGER NOT NULL,        -- foreign key to projects.id
+    df_number TEXT UNIQUE NOT NULL,         -- e.g., df_220820251659
+    reason TEXT NOT NULL,
+    description TEXT,
+    photos_id TEXT,                         -- store photo filenames or IDs
+    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_number) REFERENCES projects(id)
 )
 
 """)
