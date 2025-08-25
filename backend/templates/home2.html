@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+<div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Problem Reports</h1>
+        <div class="flex items-center space-x-2">
+            <input type="text" placeholder="Search..." class="px-3 py-2 border rounded-lg shadow-sm text-sm focus:ring focus:ring-blue-300" />
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+                + New Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Feature Selector with Search + Checkboxes -->
+    <div class="mb-4 p-4 bg-white shadow rounded-lg">
+        <div class="flex items-center justify-between mb-2">
+            <label class="font-medium text-gray-700">Select Features / Columns:</label>
+            <div>
+                <button id="selectAllBtn" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Select All</button>
+                <button id="deselectAllBtn" class="px-2 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 text-xs">Deselect All</button>
+            </div>
+        </div>
+        <input id="featureSearch" type="text" placeholder="Search features..." class="w-full px-3 py-2 border rounded shadow-sm text-sm mb-2 focus:ring focus:ring-blue-300" />
+
+        <div id="featureList" class="max-h-48 overflow-y-auto border rounded p-2">
+            <label class="block"><input type="checkbox" value="priority" class="featureCheckbox mr-2"> Priority</label>
+            <label class="block"><input type="checkbox" value="created_at" class="featureCheckbox mr-2"> Created At</label>
+            <label class="block"><input type="checkbox" value="assigned_to" class="featureCheckbox mr-2"> Assigned To</label>
+            <label class="block"><input type="checkbox" value="severity" class="featureCheckbox mr-2"> Severity</label>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+        <table id="problemTable" class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">DF Number</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Project</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Manager</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                    <!-- Extra columns dynamically added here -->
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for p in data %}
+                <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="openDetails('{{ p.df_number }}')">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ p.df_number }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.project }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.manager }}</td>
+                    <td class="px-6 py-4 text-red-500 font-semibold">{{ p.reason }}</td>
+                    <td class="px-6 py-4">
+                        {% if p.status == "Completed" %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-green-100 text-green-800">Completed</span>
+                        {% elif p.status == "Pending" %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-yellow-100 text-yellow-800">Pending</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-red-100 text-red-800">Issue</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-600 hover:underline">View</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sidebar (Hidden by default, opens on row click) -->
+    <div id="detailsPanel" class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-6 hidden overflow-y-auto">
+        <button onclick="closeDetails()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">✖</button>
+        <h2 class="text-xl font-bold mb-4">Problem Report Details</h2>
+        <div id="detailsContent">
+            <p class="text-gray-600">Select a report to view details...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const table = document.getElementById("problemTable");
+    const featureCheckboxes = document.querySelectorAll(".featureCheckbox");
+    const featureSearch = document.getElementById("featureSearch");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const deselectAllBtn = document.getElementById("deselectAllBtn");
+
+    // Sample extra data
+    const extraData = {
+        priority: ["High", "Medium", "Low", "High", "Medium"],
+        created_at: ["2025-08-22", "2025-08-21", "2025-08-20", "2025-08-19", "2025-08-18"],
+        assigned_to: ["Alice", "Bob", "Charlie", "Diana", "Eve"],
+        severity: ["Critical", "Moderate", "Low", "Critical", "Moderate"]
+    };
+
+    // Add/Remove column based on checkbox
+    featureCheckboxes.forEach(cb => {
+        cb.addEventListener("change", (e) => {
+            const feature = e.target.value;
+            const headerRow = table.querySelector("thead tr");
+            const existingHeaders = Array.from(headerRow.querySelectorAll("th")).map(th => th.dataset.feature);
+
+            if (e.target.checked) {
+                if (existingHeaders.includes(feature)) return; // Already exists
+
+                // Add header
+                const newTh = document.createElement("th");
+                newTh.innerText = feature.charAt(0).toUpperCase() + feature.slice(1);
+                newTh.dataset.feature = feature;
+                newTh.classList.add("px-6","py-3","text-left","font-semibold","text-gray-600","uppercase","tracking-wider");
+                headerRow.appendChild(newTh);
+
+                // Add cells to each row
+                const rows = table.querySelectorAll("tbody tr");
+                rows.forEach((row, i) => {
+                    const newTd = document.createElement("td");
+                    newTd.dataset.feature = feature;
+                    newTd.classList.add("px-6","py-4");
+                    newTd.innerText = extraData[feature][i] || "-";
+                    row.appendChild(newTd);
+                });
+            } else {
+                // Remove column
+                const thToRemove = headerRow.querySelector(`th[data-feature="${feature}"]`);
+                if (thToRemove) thToRemove.remove();
+
+                table.querySelectorAll(`td[data-feature="${feature}"]`).forEach(td => td.remove());
+            }
+        });
+    });
+
+    // Search in feature list
+    featureSearch.addEventListener("input", () => {
+        const filter = featureSearch.value.toLowerCase();
+        document.querySelectorAll("#featureList label").forEach(label => {
+            const text = label.innerText.toLowerCase();
+            label.style.display = text.includes(filter) ? "block" : "none";
+        });
+    });
+
+    // Select All / Deselect All
+    selectAllBtn.addEventListener("click", () => featureCheckboxes.forEach(cb => cb.checked = true) );
+    deselectAllBtn.addEventListener("click", () => featureCheckboxes.forEach(cb => cb.checked = false) );
+
+    // Sidebar functions
+    function openDetails(df_number) {
+        document.getElementById("detailsPanel").classList.remove("hidden");
+        document.getElementById("detailsContent").innerHTML = `<p><strong>Loading details for:</strong> ${df_number}</p>`;
+    }
+
+    function closeDetails() {
+        document.getElementById("detailsPanel").classList.add("hidden");
+    }
+</script>
+{% endblock %}
