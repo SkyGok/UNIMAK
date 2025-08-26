@@ -144,7 +144,13 @@ def upload():
         return redirect("/")
 
     projects = db.execute("SELECT id, project_number FROM projects")
-    reasons = ["Incorrect installation", "Damaged materials", "Missing components", "Design issue", "Other"]
+    reasons = [
+        {"key": "reason.incorrect_installation", "default": "Incorrect installation"},
+        {"key": "reason.damaged_materials", "default": "Damaged materials"},
+        {"key": "reason.missing_components", "default": "Missing components"},
+        {"key": "reason.design_issue", "default": "Design issue"},
+        {"key": "reason.other", "default": "Other"}
+    ]
     t = get_translations()
     return render_template("upload.html", projects=projects, reasons=reasons, t=t)
 
@@ -192,22 +198,6 @@ def history():
     """)
     t = get_translations()
     return render_template("history.html", data=rows, t=t)
-
-
-# -------------------- SETTINGS --------------------
-@app.route("/settings", methods=["GET", "POST"])
-@login_required
-def settings():
-    if request.method == "POST":
-        language = request.form.get("language")
-        session["language"] = language
-        db.execute("UPDATE users SET language = ? WHERE id = ?", language, session["user_id"])
-        flash("Language updated successfully!", "success")
-        return redirect("/settings")
-
-    user_language = session.get("language", "en")
-    t = get_translations()
-    return render_template("settings.html", user_language=user_language, t=t)
 
 
 # -------------------- ADMIN --------------------

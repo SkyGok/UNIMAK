@@ -10,7 +10,7 @@
 
     <!-- Navbar -->
     <nav class="bg-white border-b shadow-sm">
-        <div class="container mx-auto flex flex-wrap items-center justify-between p-4">
+        <div class="container mx-auto flex flex-wrap items-center justify-between p-4 gap-6">
             <!-- Brand -->
             <a href="/" class="flex items-center font-bold text-xl">
                 <span class="text-orange-500">U</span>
@@ -19,28 +19,27 @@
                 <span class="text-orange-500">M</span>
                 <span class="text-orange-500">A</span>
                 <span class="text-orange-500">K</span>
-                <small class="ml-2 text-gray-500">Social Media</small>
-                {% if session["user_id"] %}
-                    <div class="hidden md:flex md:items-center md:gap-6">
-                            <a href="/upload" class="hover:text-orange-600">Upload</a>
-                            <a href="/info" class="hover:text-orange-600">Info</a>
-                            <a href="/history" class="hover:text-orange-600">History</a>
-                    </div>
-                {% endif %}
+                <small class="ml-2 text-gray-500" data-translate="nav.brand">Social Media</small>
             </a>
 
             <!-- Menu (Desktop) -->
-            <div class="hidden md:justify-items-start md:flex md:items-center md:gap-6 ml-6 ml-auto">
+            <div class="hidden md:flex md:items-center md:gap-6 ml-auto">
                 {% if session["user_id"] %}
-                    <div class="hidden md:flex md:items-center md:gap-6 ml-auto">
-                        <a href="/settings" class="hover:text-orange-600">Settings</a>
-                        <a href="/logout" class="text-red-500 hover:text-red-600">Log Out</a>
-                    </div>
-                    
+                    <a href="/upload" class="hover:text-orange-600" data-translate="nav.upload">Upload</a>
+                    <a href="/info" class="hover:text-orange-600" data-translate="nav.info">Info</a>
+                    <a href="/history" class="hover:text-orange-600" data-translate="nav.history">History</a>
+                    <a href="/logout" class="text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
                 {% else %}
-                    <a href="/register" class="hover:text-orange-600">Register</a>
-                    <a href="/login" class="hover:text-orange-600">Log In</a>
+                    <a href="/register" class="hover:text-orange-600" data-translate="nav.register">Register</a>
+                    <a href="/login" class="hover:text-orange-600" data-translate="nav.login">Log In</a>
                 {% endif %}
+
+                <!-- Desktop Language Selector -->
+                <select id="languageSelect" class="ml-4 px-2 py-1 border rounded shadow-sm text-sm">
+                    <option value="en">EN</option>
+                    <option value="tr">TR</option>
+                    <option value="es">ES</option>
+                </select>
             </div>
 
             <!-- Mobile Menu Button -->
@@ -56,15 +55,22 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden flex-col space-y-2 px-4 pb-4 md:hidden">
             {% if session["user_id"] %}
-                <a href="/upload" class="block hover:text-orange-500">Upload</a>
-                <a href="/projects" class="block hover:text-orange-500">Projects</a>
-                <a href="/history" class="block hover:text-orange-500">History</a>
-                <a href="/settings" class="block hover:text-orange-500">Settings</a>
-                <a href="/logout" class="block text-red-500 hover:text-red-600">Log Out</a>
+                <a href="/upload" class="block hover:text-orange-500" data-translate="nav.upload">Upload</a>
+                <a href="/projects" class="block hover:text-orange-500" data-translate="nav.projects">Projects</a>
+                <a href="/history" class="block hover:text-orange-500" data-translate="nav.history">History</a>
+                <a href="/settings" class="block hover:text-orange-500" data-translate="nav.settings">Settings</a>
+                <a href="/logout" class="block text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
             {% else %}
-                <a href="/register" class="block hover:text-blue-600">Register</a>
-                <a href="/login" class="block hover:text-blue-600">Log In</a>
+                <a href="/register" class="block hover:text-blue-600" data-translate="nav.register">Register</a>
+                <a href="/login" class="block hover:text-blue-600" data-translate="nav.login">Log In</a>
             {% endif %}
+
+            <!-- Mobile Language Selector -->
+            <select id="languageSelectMobile" class="mt-2 px-2 py-1 border rounded shadow-sm text-sm">
+                <option value="en">EN</option>
+                <option value="tr">TR</option>
+                <option value="es">ES</option>
+            </select>
         </div>
     </nav>
 
@@ -85,12 +91,64 @@
         &copy; {{ current_year }} UNIMAK - All Rights Reserved
     </footer>
 
-    <!-- Mobile Menu Script -->
+    <!-- Scripts -->
     <script>
+        // Mobile menu toggle
         document.getElementById('menu-toggle').addEventListener('click', function () {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         });
+
+        // Cookie helpers
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            document.cookie = name + "=" + value + "; path=/; expires=" + date.toUTCString();
+        }
+
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+
+        // Translation logic
+        let translations = {};
+        async function loadTranslations() {
+            const res = await fetch('/static/translations.json');
+            translations = await res.json();
+        }
+
+        function applyLanguage(lang) {
+            setCookie('lang', lang, 30);
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const keys = el.dataset.translate.split('.');
+                let value = translations[lang];
+                keys.forEach(k => { if(value) value = value[k]; });
+                if(value) el.textContent = value;
+            });
+        }
+
+        async function initLanguage() {
+            await loadTranslations();
+            const savedLang = getCookie('lang') || 'en';
+            document.getElementById('languageSelect').value = savedLang;
+            document.getElementById('languageSelectMobile').value = savedLang;
+            applyLanguage(savedLang);
+
+            // Event listeners for both selectors
+            document.getElementById('languageSelect').addEventListener('change', (e) => {
+                applyLanguage(e.target.value);
+                document.getElementById('languageSelectMobile').value = e.target.value;
+            });
+
+            document.getElementById('languageSelectMobile').addEventListener('change', (e) => {
+                applyLanguage(e.target.value);
+                document.getElementById('languageSelect').value = e.target.value;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initLanguage);
     </script>
+
 </body>
 </html>

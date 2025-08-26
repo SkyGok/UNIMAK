@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 
-{% block title %}Manager Info{% endblock %}
+{% block title %}Info{% endblock %}
 
 {% block main %}
 <div class="max-w-4xl mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6">Managers & Projects</h1>
+  <h1 class="text-2xl font-bold mb-6" data-translate="info.heading">Managers & Projects</h1>
 
   {% for manager, projects in data.items() %}
   <div class="mb-4 border rounded-lg shadow-sm bg-white">
@@ -13,7 +13,7 @@
     <button 
       class="w-full flex justify-between items-center px-4 py-2 text-left text-lg font-semibold bg-gray-100 hover:bg-gray-200 rounded-t-lg"
       onclick="toggleDetails('{{ manager|replace(' ', '_') }}')">
-      {{ manager }}
+      <span data-translate="manager_info.manager_name">{{ manager }}</span>
       <span>▼</span>
     </button>
 
@@ -22,13 +22,22 @@
       {% if projects %}
         {% for project in projects %}
           <div class="mb-3 p-3 bg-gray-50 rounded-lg">
-            <p><span class="font-semibold">Project #:</span> {{ project.number }}</p>
-            <p><span class="font-semibold">Reason:</span> {{ project.reason or "—" }}</p>
-            <p><span class="font-semibold">Description:</span> {{ project.description or "—" }}</p>
+            <p>
+              <span class="font-semibold" data-translate="manager_info.project_number">Project #:</span> 
+              {{ project.number }}
+            </p>
+            <p>
+              <span class="font-semibold" data-translate="manager_info.reason">Reason:</span> 
+              {{ project.reason or "—" }}
+            </p>
+            <p>
+              <span class="font-semibold" data-translate="manager_info.description">Description:</span> 
+              {{ project.description or "—" }}
+            </p>
           </div>
         {% endfor %}
       {% else %}
-        <p class="text-gray-500">No projects assigned.</p>
+        <p class="text-gray-500" data-translate="manager_info.no_projects">No projects assigned.</p>
       {% endif %}
     </div>
 
@@ -36,17 +45,10 @@
   {% endfor %}
 </div>
 
-
 <script>
     function toggleDetails(managerId) {
         const section = document.getElementById("details-" + managerId);
-        if (section.classList.contains("hidden")) {
-            section.classList.remove("hidden");
-        } else {
-            section.classList.add("hidden");
-        }
+        section.classList.toggle("hidden");
     }
 </script>
 {% endblock %}
-
-

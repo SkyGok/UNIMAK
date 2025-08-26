@@ -1,0 +1,371 @@
+{
+  "en": {
+    "nav": {
+      "brand": "Social Media",
+      "upload": "Upload",
+      "info": "Info",
+      "history": "History",
+      "projects": "Projects",
+      "settings": "Settings",
+      "logout": "Log Out",
+      "register": "Register",
+      "login": "Log In"
+    },
+    "common": {
+      "search": "Search...",
+      "apply": "Apply",
+      "close": "Close",
+      "view": "View",
+      "save_changes": "Save Changes",
+      "language": "Language",
+      "choose": "Choose...",
+      "submit": "Submit",
+      "actions": "Actions",
+      "no_data": "No data available",
+      "loading": "Loading..."
+    },
+    "home": {
+      "title": "Problem Reports",
+      "new_report": "+ New Report",
+      "columns": {
+        "df_number": "DF Number",
+        "project": "Project",
+        "manager": "Manager",
+        "reason": "Reason",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "feature_selector": {
+        "button": "+ Add Columns",
+        "title": "Select Features",
+        "select_all": "Select All",
+        "deselect_all": "Deselect All",
+        "search": "Search features..."
+      }
+    },
+    "features": {
+      "priority": "Priority",
+      "created_at": "Created At",
+      "assigned_to": "Assigned To",
+      "severity": "Severity"
+    },
+    "sidebar": {
+      "title": "Problem Report Details",
+      "placeholder": "Select a report to view details...",
+      "loading_for": "Loading details for:"
+    },
+    "upload": {
+      "title": "Upload Photos",
+      "project_number": "Project Number",
+      "project_manager": "Project Manager",
+      "reason": "Reason (Select or write)",
+      "description": "Description",
+      "photos": "Photos",
+      "photos_hint": "Add up to 6 photos",
+      "drop_hint": "Drag & drop or click to upload",
+      "submit_report": "Submit Report"
+    },
+    "reason": {
+      "incorrect_installation": "Incorrect installation",
+      "damaged_materials": "Damaged materials",
+      "missing_components": "Missing components",
+      "design_issue": "Design issue",
+      "other": "Other"
+    },
+    "info": {
+      "title": "Managers & Their Projects",
+      "no_projects": "No projects assigned"
+    },
+    "history": {
+      "title": "History",
+      "columns": {
+        "project": "Project",
+        "manager": "Manager",
+        "reason": "Reason",
+        "description": "Description",
+        "record_date": "Record Date"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "language_updated": "Language updated successfully!"
+    },
+    "auth": {
+      "username": "Username",
+      "password": "Password",
+      "confirm_password": "Confirm Password",
+      "login": "Log In",
+      "register": "Register"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "issue": "Issue"
+    },
+    "reasons": {
+      "incorrect_installation": "Incorrect installation",
+      "damaged_materials": "Damaged materials",
+      "missing_components": "Missing components",
+      "design_issue": "Design issue",
+      "other": "Other"
+    },
+    "flash": {
+      "report_created": "Project issue reported successfully!",
+      "language_saved": "Language preference saved."
+    },
+    "validation": {
+      "must_provide_username": "Must provide username",
+      "must_provide_password": "Must provide password",
+      "passwords_do_not_match": "Passwords do not match",
+      "username_taken": "Username already taken",
+      "invalid_credentials": "Invalid username and/or password"
+    }
+  },
+  "tr": {
+    "nav": {
+      "brand": " Sosyal Medya",
+      "upload": "Yükle",
+      "info": "Bilgi",
+      "history": "Geçmiş",
+      "projects": "Projeler",
+      "settings": "Ayarlar",
+      "logout": "Çıkış Yap",
+      "register": "Kayıt Ol",
+      "login": "Giriş Yap"
+    },
+    "common": {
+      "search": "Ara...",
+      "apply": "Uygula",
+      "close": "Kapat",
+      "view": "Görüntüle",
+      "save_changes": "Değişiklikleri Kaydet",
+      "language": "Dil",
+      "choose": "Seçiniz...",
+      "submit": "Gönder",
+      "actions": "İşlemler",
+      "no_data": "Gösterilecek veri yok",
+      "loading": "Yükleniyor..."
+    },
+    "home": {
+      "title": "Sorun Raporları",
+      "new_report": "+ Yeni Rapor",
+      "columns": {
+        "df_number": "DF Numarası",
+        "project": "Proje",
+        "manager": "Proje Yöneticisi",
+        "reason": "Sebep",
+        "status": "Durum",
+        "actions": "İşlemler"
+      },
+      "feature_selector": {
+        "button": "+ Sütun Ekle",
+        "title": "Özellikleri Seç",
+        "select_all": "Tümünü Seç",
+        "deselect_all": "Seçimi Kaldır",
+        "search": "Özelliklerde ara..."
+      }
+    },
+    "features": {
+      "priority": "Öncelik",
+      "created_at": "Oluşturulma",
+      "assigned_to": "Atanan",
+      "severity": "Ciddiyet"
+    },
+    "sidebar": {
+      "title": "Sorun Raporu Detayları",
+      "placeholder": "Detayları görmek için bir rapor seçin...",
+      "loading_for": "Şunun detayları yükleniyor:"
+    },
+    "upload": {
+      "title": "Fotoğraf Yükle",
+      "project_number": "Proje Numarası",
+      "project_manager": "Proje Yöneticisi",
+      "reason": "Sebep (Seç veya yaz)",
+      "description": "Açıklama",
+      "description_placeholder": " Problemi detayları ile belirtiniz",
+      "upload_photos": "Fotoğraf Yükleyiniz (max 6)",
+      "photos_hint": "En fazla 6 fotoğraf ekleyin",
+      "drop_hint": "Sürükleyip bırakın veya yüklemek için tıklayın",
+      "submit_report": "Raporu Gönder"
+    },
+    "reason": {
+      "incorrect_installation": "Hatalı montaj",
+      "damaged_materials": "Hasarlı malzemeler",
+      "missing_components": "Eksik parçalar",
+      "design_issue": "Tasarım hatası",
+      "other": "Diğer"
+    },
+    "info": {
+      "title": "Yöneticiler ve Projeleri",
+      "no_projects": "Atanmış proje yok",
+      "heading": "Yöneticiler ve Projeler"
+    },
+    "history": {
+      "title": "Proje Geçmişi",
+      "columns": {
+        "project": "Proje",
+        "manager": "Yönetici",
+        "reason": "Sebep",
+        "description": "Açıklama",
+        "record_date": "Kayıt Tarihi",
+        "date": "Tarih"
+      }
+    },
+    "settings": {
+      "title": "Ayarlar",
+      "language_updated": "Dil başarıyla güncellendi!"
+    },
+    "auth": {
+      "username": "Kullanıcı Adı",
+      "password": "Şifre",
+      "confirm_password": "Şifre (Tekrar)",
+      "login": "Giriş Yap",
+      "register": "Kayıt Ol"
+    },
+    "status": {
+      "completed": "Tamamlandı",
+      "pending": "Beklemede",
+      "issue": "Sorun"
+    },
+    "reasons": {
+      "incorrect_installation": "Hatalı montaj",
+      "damaged_materials": "Hasarlı malzemeler",
+      "missing_components": "Eksik parçalar",
+      "design_issue": "Tasarım sorunu",
+      "other": "Diğer"
+    },
+    "flash": {
+      "report_created": "Sorun raporu başarıyla oluşturuldu!",
+      "language_saved": "Dil tercihi kaydedildi."
+    },
+    "validation": {
+      "must_provide_username": "Kullanıcı adı girmelisiniz",
+      "must_provide_password": "Şifre girmelisiniz",
+      "passwords_do_not_match": "Şifreler eşleşmiyor",
+      "username_taken": "Kullanıcı adı zaten alınmış",
+      "invalid_credentials": "Kullanıcı adı ve/veya şifre geçersiz"
+    }
+  },
+  "es": {
+    "nav": {
+      "brand": " Redes Sociales",
+      "upload": "Subir",
+      "info": "Información",
+      "history": "Historial",
+      "projects": "Proyectos",
+      "settings": "Configuración",
+      "logout": "Cerrar sesión",
+      "register": "Registrarse",
+      "login": "Iniciar sesión"
+    },
+    "common": {
+      "search": "Buscar...",
+      "apply": "Aplicar",
+      "close": "Cerrar",
+      "view": "Ver",
+      "save_changes": "Guardar Cambios",
+      "language": "Idioma",
+      "choose": "Elegir...",
+      "submit": "Enviar",
+      "actions": "Acciones",
+      "no_data": "No hay datos disponibles",
+      "loading": "Cargando..."
+    },
+    "home": {
+      "title": "Informes de Problemas",
+      "new_report": "+ Nuevo Informe",
+      "columns": {
+        "df_number": "Número DF",
+        "project": "Proyecto",
+        "manager": "Gerente",
+        "reason": "Motivo",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "feature_selector": {
+        "button": "+ Agregar Columnas",
+        "title": "Seleccionar Características",
+        "select_all": "Seleccionar Todo",
+        "deselect_all": "Deseleccionar Todo",
+        "search": "Buscar características..."
+      }
+    },
+    "features": {
+      "priority": "Prioridad",
+      "created_at": "Creado El",
+      "assigned_to": "Asignado a",
+      "severity": "Severidad"
+    },
+    "sidebar": {
+      "title": "Detalles del Informe de Problemas",
+      "placeholder": "Selecciona un informe para ver detalles...",
+      "loading_for": "Cargando detalles de:"
+    },
+    "upload": {
+      "title": "Subir Fotos",
+      "project_number": "Número de Proyecto",
+      "project_manager": "Gerente de Proyecto",
+      "reason": "Motivo (seleccionar o escribir)",
+      "description": "Descripción",
+      "photos": "Fotos",
+      "photos_hint": "Añade hasta 6 fotos",
+      "drop_hint": "Arrastra y suelta o haz clic para subir",
+      "submit_report": "Enviar Informe"
+    },
+    "reason": {
+      "incorrect_installation": "Instalación incorrecta",
+      "damaged_materials": "Materiales dañados",
+      "missing_components": "Componentes faltantes",
+      "design_issue": "Problema de diseño",
+      "other": "Otro"
+    },
+    "info": {
+      "title": "Gerentes y sus Proyectos",
+      "no_projects": "Sin proyectos asignados"
+    },
+    "history": {
+      "title": "Historial",
+      "columns": {
+        "project": "Proyecto",
+        "manager": "Gerente",
+        "reason": "Motivo",
+        "description": "Descripción",
+        "record_date": "Fecha de Registro"
+      }
+    },
+    "settings": {
+      "title": "Configuración",
+      "language_updated": "¡Idioma actualizado con éxito!"
+    },
+    "auth": {
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "confirm_password": "Confirmar Contraseña",
+      "login": "Iniciar sesión",
+      "register": "Registrarse"
+    },
+    "status": {
+      "completed": "Completado",
+      "pending": "Pendiente",
+      "issue": "Problema"
+    },
+    "reasons": {
+      "incorrect_installation": "Instalación incorrecta",
+      "damaged_materials": "Materiales dañados",
+      "missing_components": "Componentes faltantes",
+      "design_issue": "Problema de diseño",
+      "other": "Otro"
+    },
+    "flash": {
+      "report_created": "¡Informe creado con éxito!",
+      "language_saved": "Preferencia de idioma guardada."
+    },
+    "validation": {
+      "must_provide_username": "Debe proporcionar nombre de usuario",
+      "must_provide_password": "Debe proporcionar contraseña",
+      "passwords_do_not_match": "Las contraseñas no coinciden",
+      "username_taken": "El nombre de usuario ya está en uso",
+      "invalid_credentials": "Nombre de usuario y/o contraseña inválidos"
+    }
+  }
+}
