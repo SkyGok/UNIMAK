@@ -22,16 +22,25 @@ CREATE TABLE IF NOT EXISTS managers (
 )
 """)
 
-# Create finances table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_name TEXT NOT NULL UNIQUE,
+    customer_country TEXT NOT NULL UNIQUE
+)
+""")
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_number TEXT NOT NULL UNIQUE,
     manager_id INTEGER NOT NULL,
-    record_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    customer_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    machine_type TEXT NOT NULL UNIQUE,
+    machine_top_group TEXT NOT NULL UNIQUE,
     FOREIGN KEY (manager_id) REFERENCES managers(id)
 )
-
 """)
 
 cursor.execute("""
@@ -45,7 +54,6 @@ CREATE TABLE problems (
     record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_number) REFERENCES projects(id)
 )
-
 """)
 
 # Commit changes and close connection
