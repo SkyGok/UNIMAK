@@ -7,7 +7,9 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
 
+# ------------------------
 # Configure application
+# ------------------------
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
@@ -21,32 +23,31 @@ Session(app)
 # Connect to database
 db = SQL("sqlite:///files/unimak.db")
 
-
+# ------------------------
+# After request: prevent caching
+# ------------------------
 @app.after_request
 def after_request(response):
-    """Ensure responses aren't cached"""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
 
-
 # -------------------- HOME --------------------
 @app.route("/", methods=["GET"])
 @login_required
 def index():
-    """Show only project problem reports on main page"""
+    """Show latest project problem reports on main page"""
     rows = db.execute("""
         SELECT pr.df_number, p.project_number, p.manager_id, m.manager_name,
                pr.reason, pr.description, pr.photos_id, pr.record_date
         FROM problems pr
-        JOIN projects p ON pr.project_number = p.id
+        JOIN projects p ON pr.project_id = p.id
         JOIN managers m ON p.manager_id = m.id
         ORDER BY pr.record_date DESC
     """)
     t = get_translations()
     return render_template("home.html", data=rows, t=t)
-
 
 # -------------------- LOGIN --------------------
 @app.route("/login", methods=["GET", "POST"])
@@ -68,13 +69,11 @@ def login():
     else:
         return render_template("login.html")
 
-
 # -------------------- LOGOUT --------------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
-
 
 # -------------------- REGISTER --------------------
 @app.route("/register", methods=["GET", "POST"])
@@ -88,7 +87,6 @@ def register():
             return apology("Please fill all fields", 400)
         if password != confirmation:
             return apology("Passwords do not match", 400)
-
         if db.execute("SELECT * FROM users WHERE username = ?", username):
             return apology("Username already taken", 400)
 
@@ -97,7 +95,6 @@ def register():
         return redirect("/login")
     else:
         return render_template("register.html")
-
 
 # -------------------- UPLOAD PROBLEM --------------------
 @app.route("/upload", methods=["GET", "POST"])
@@ -111,11 +108,14 @@ def upload():
 
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
+
+        # Create directories for uploads (optional for now)
         folder_name = f"{df_number}_{project_id}"
         base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
 
+        # Save photos
         photo_filenames = []
         for idx, photo in enumerate(photos, start=1):
             if photo and photo.filename:
@@ -136,9 +136,16 @@ def upload():
 
         # Insert into problems table
         db.execute("""
-            INSERT INTO problems (project_number, df_number, reason, description, photos_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, project_id, df_number, reason, description, ",".join(photo_filenames))
+            INSERT INTO problems (project_id, df_number, recorder_id, reason, description, photos_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, project_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
+
+        # Get the problem_id for steps
+        problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
+        db.execute("""
+            INSERT INTO problem_steps (problem_id, step_number, df_filename)
+            VALUES (?, ?, ?)
+        """, problem_id, 1, f"{df_number}.xlsx")
 
         flash("Problem reported successfully!", "success")
         return redirect("/")
@@ -177,8 +184,8 @@ def upload():
         {"key": "priority.high", "default": "High"}
     ]
     t = get_translations()
-    return render_template("upload.html", projects=projects, reasons=reasons,priority=priority, action=action, department=department, t=t)
-
+    return render_template("upload.html", projects=projects, reasons=reasons,
+                           priority=priority, action=action, department=department, t=t)
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])
@@ -188,7 +195,7 @@ def info():
         SELECT m.manager_name, p.project_number, pr.df_number, pr.reason, pr.description, pr.photos_id
         FROM managers m
         LEFT JOIN projects p ON p.manager_id = m.id
-        LEFT JOIN problems pr ON pr.project_number = p.id
+        LEFT JOIN problems pr ON pr.project_id = p.id
         ORDER BY m.manager_name, p.project_number
     """)
 
@@ -209,21 +216,20 @@ def info():
     t = get_translations()
     return render_template("info.html", data=data, t=t)
 
-
 # -------------------- HISTORY --------------------
 @app.route("/history", methods=["GET"])
 @login_required
 def history():
     rows = db.execute("""
-        SELECT pr.df_number, p.project_number, m.manager_name, pr.reason, pr.description, pr.photos_id, pr.record_date
-        FROM problems pr
-        JOIN projects p ON pr.project_number = p.id
+        SELECT ps.df_filename, p.project_number, m.manager_name, pr.reason, pr.description, pr.photos_id, ps.created_at
+        FROM problem_steps ps
+        JOIN problems pr ON ps.problem_id = pr.id
+        JOIN projects p ON pr.project_id = p.id
         JOIN managers m ON p.manager_id = m.id
-        ORDER BY pr.record_date DESC
+        ORDER BY ps.created_at DESC
     """)
     t = get_translations()
     return render_template("history.html", data=rows, t=t)
-
 
 # -------------------- ADMIN --------------------
 @app.route("/admin", methods=["GET", "POST"])
@@ -231,7 +237,6 @@ def history():
 def admin():
     t = get_translations()
     return render_template("admin.html", t=t)
-
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":
