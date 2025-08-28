@@ -55,22 +55,56 @@
       "loading_for": "Loading details for:"
     },
     "upload": {
-      "title": "Upload Photos",
+      "title": "Problem Report",
       "project_number": "Project Number",
+      "work_order": "Work Order",
+      "unit": "Unit",
+      "part_name": "Part Name",
+      "project_name": "Project Name",
+      "customer": "Customer",
+      "quantity": "Quantity",
+      "machine_main_group": "Machine Main Group",
+      "machine_type": "Machine Type",
+      "manager": "Manager",
       "project_manager": "Project Manager",
       "reason": "Reason (Select or write)",
+      "department": "Department Responsible",
+      "action": "Action",
+      "priority": "Priority",
       "description": "Description",
       "photos": "Photos",
       "photos_hint": "Add up to 6 photos",
       "drop_hint": "Drag & drop or click to upload",
       "submit_report": "Submit Report"
     },
-    "reason": {
+    "reasons": {
       "incorrect_installation": "Incorrect installation",
       "damaged_materials": "Damaged materials",
       "missing_components": "Missing components",
       "design_issue": "Design issue",
+      "programming_issue": "Programming issue",
+      "wrong_part": "Wrong part",
       "other": "Other"
+    },
+    "department": {
+      "sales": "Sales",
+      "design": "Design",
+      "method": "Method",
+      "purchase": "Purchase",
+      "manufacturing": "Manufacturing",
+      "warehouse": "Warehouse",
+      "quality": "Quality",
+      "shipment": "Shipment",
+      "automation": "Automation",
+      "electronics": "Electronics",
+      "international_assembly_electronics": "International Assembly (Electronics)",
+      "international_assembly_mechanics": "International Assembly (Mechanics)"
+    },
+    "action": {
+      "1": "Send Parts",
+      "2": "Fix On-spot",
+      "3": "Customer Support",
+      "4": "Software Revision"
     },
     "info": {
       "title": "Managers & Their Projects",
@@ -102,13 +136,6 @@
       "pending": "Pending",
       "issue": "Issue"
     },
-    "reasons": {
-      "incorrect_installation": "Incorrect installation",
-      "damaged_materials": "Damaged materials",
-      "missing_components": "Missing components",
-      "design_issue": "Design issue",
-      "other": "Other"
-    },
     "flash": {
       "report_created": "Project issue reported successfully!",
       "language_saved": "Language preference saved."
@@ -123,7 +150,7 @@
   },
   "tr": {
     "nav": {
-      "brand": " Sosyal Medya",
+      "brand": "Sosyal Medya",
       "upload": "Yükle",
       "info": "Bilgi",
       "history": "Geçmiş",
@@ -177,28 +204,65 @@
       "loading_for": "Şunun detayları yükleniyor:"
     },
     "upload": {
-      "title": "Fotoğraf Yükle",
+      "title": "DF Raporu",
       "project_number": "Proje Numarası",
+      "work_order": "İş Emri",
+      "unit": "Birim",
+      "part_name": "Parça Adı",
+      "project_name": "Proje Adı",
+      "customer": "Müşteri",
+      "quantity": "Miktar",
+      "machine_main_group": "Makine Üst Grubu",
+      "machine_type": "Makine Tipi",
+      "manager": "Yönetici",
       "project_manager": "Proje Yöneticisi",
-      "reason": "Sebep (Seç veya yaz)",
+      "reason": "Sebep (Seçiniz veya yazınız)",
+      "department": "Sorumlu Departman",
+      "action": "Aksiyon",
+      "priority": "Öncelik",
       "description": "Açıklama",
-      "description_placeholder": " Problemi detayları ile belirtiniz",
-      "upload_photos": "Fotoğraf Yükleyiniz (max 6)",
+      "photos": "Fotoğraflar",
       "photos_hint": "En fazla 6 fotoğraf ekleyin",
       "drop_hint": "Sürükleyip bırakın veya yüklemek için tıklayın",
-      "submit_report": "Raporu Gönder"
+      "submit": "Raporu Gönder"
     },
-    "reason": {
+    "reasons": {
       "incorrect_installation": "Hatalı montaj",
       "damaged_materials": "Hasarlı malzemeler",
       "missing_components": "Eksik parçalar",
-      "design_issue": "Tasarım hatası",
+      "design_issue": "Tasarım sorunu",
+      "programming_issue": "Programlama hatası",
+      "wrong_part": "Uygunsuz parça",
       "other": "Diğer"
+    },
+    "department": {
+      "sales": "Satın Alma",
+      "design": "Tasarım",
+      "method": "Metod",
+      "purchase": "Satın Alma",
+      "manufacturing": "Üretim",
+      "warehouse": "Depo",
+      "quality": "Kalite",
+      "shipment": "Sevkiyat",
+      "automation": "Otomasyon",
+      "electronics": "Elektronik",
+      "international_assembly_electronics": "Uluslararası Montaj (Elektronik)",
+      "international_assembly_mechanics": "Uluslararası Montaj (Mekanik)"
+    },
+    "action": {
+      "1": "Malzeme Gönderimi",
+      "2": "Yerinde Düzeltme",
+      "3": "Müşteriden Tedarik",
+      "4": "Yazılım Revizyonu"
+    },
+    "priority": {
+      "low": "Düşük",
+      "normal": "Normal",
+      "high": "Yüksek"
     },
     "info": {
       "title": "Yöneticiler ve Projeleri",
-      "no_projects": "Atanmış proje yok",
-      "heading": "Yöneticiler ve Projeler"
+      "no_projects": "Atanmış proje yok"
     },
     "history": {
       "title": "Proje Geçmişi",
@@ -207,8 +271,7 @@
         "manager": "Yönetici",
         "reason": "Sebep",
         "description": "Açıklama",
-        "record_date": "Kayıt Tarihi",
-        "date": "Tarih"
+        "record_date": "Kayıt Tarihi"
       }
     },
     "settings": {
@@ -227,13 +290,6 @@
       "pending": "Beklemede",
       "issue": "Sorun"
     },
-    "reasons": {
-      "incorrect_installation": "Hatalı montaj",
-      "damaged_materials": "Hasarlı malzemeler",
-      "missing_components": "Eksik parçalar",
-      "design_issue": "Tasarım sorunu",
-      "other": "Diğer"
-    },
     "flash": {
       "report_created": "Sorun raporu başarıyla oluşturuldu!",
       "language_saved": "Dil tercihi kaydedildi."
@@ -248,7 +304,7 @@
   },
   "es": {
     "nav": {
-      "brand": " Redes Sociales",
+      "brand": "Redes Sociales",
       "upload": "Subir",
       "info": "Información",
       "history": "Historial",
@@ -302,22 +358,50 @@
       "loading_for": "Cargando detalles de:"
     },
     "upload": {
-      "title": "Subir Fotos",
+      "title": "Informe de Problema",
       "project_number": "Número de Proyecto",
+      "work_order": "Orden de Trabajo",
+      "unit": "Unidad",
+      "part_name": "Nombre de Pieza",
+      "project_name": "Nombre del Proyecto",
+      "customer": "Cliente",
+      "quantity": "Cantidad",
+      "machine_main_group": "Grupo Principal de Máquina",
+      "machine_type": "Tipo de Máquina",
+      "manager": "Gerente",
       "project_manager": "Gerente de Proyecto",
-      "reason": "Motivo (seleccionar o escribir)",
+      "reason": "Motivo (Seleccione o escriba)",
+      "department": "Departamento Responsable",
+      "action": "Acción",
+      "priority": "Prioridad",
       "description": "Descripción",
       "photos": "Fotos",
-      "photos_hint": "Añade hasta 6 fotos",
+      "photos_hint": "Agrega hasta 6 fotos",
       "drop_hint": "Arrastra y suelta o haz clic para subir",
       "submit_report": "Enviar Informe"
     },
-    "reason": {
+    "reasons": {
       "incorrect_installation": "Instalación incorrecta",
       "damaged_materials": "Materiales dañados",
       "missing_components": "Componentes faltantes",
       "design_issue": "Problema de diseño",
+      "programming_issue": "Problema de programación",
+      "wrong_part": "Pieza equivocada",
       "other": "Otro"
+    },
+    "department": {
+      "sales": "Ventas",
+      "design": "Diseño",
+      "method": "Método",
+      "purchase": "Compras",
+      "manufacturing": "Fabricación",
+      "warehouse": "Almacén",
+      "quality": "Calidad",
+      "shipment": "Envío",
+      "automation": "Automatización",
+      "electronics": "Electrónica",
+      "international_assembly_electronics": "Ensamblaje Internacional (Electrónica)",
+      "international_assembly_mechanics": "Ensamblaje Internacional (Mecánica)"
     },
     "info": {
       "title": "Gerentes y sus Proyectos",
@@ -348,13 +432,6 @@
       "completed": "Completado",
       "pending": "Pendiente",
       "issue": "Problema"
-    },
-    "reasons": {
-      "incorrect_installation": "Instalación incorrecta",
-      "damaged_materials": "Materiales dañados",
-      "missing_components": "Componentes faltantes",
-      "design_issue": "Problema de diseño",
-      "other": "Otro"
     },
     "flash": {
       "report_created": "¡Informe creado con éxito!",

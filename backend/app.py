@@ -145,14 +145,39 @@ def upload():
 
     projects = db.execute("SELECT id, project_number FROM projects")
     reasons = [
-        {"key": "reason.incorrect_installation", "default": "Incorrect installation"},
-        {"key": "reason.damaged_materials", "default": "Damaged materials"},
-        {"key": "reason.missing_components", "default": "Missing components"},
-        {"key": "reason.design_issue", "default": "Design issue"},
-        {"key": "reason.other", "default": "Other"}
+        {"key": "reason.missing_components", "default": "Eksik Malzeme"},
+        {"key": "reason.wrong_part", "default": "Uygunsuz Malzeme"},
+        {"key": "reason.damaged_materials", "default": "Arızalı-Malzeme"},
+        {"key": "reason.programming_issue", "default": "Otomasyon-Yazılım"},
+        {"key": "reason.design_issue", "default": "Hatalı Proje"}
+    ]
+    department = [
+        {"key": "department.sales", "default": "Sales"},
+        {"key": "department.design", "default": "Design"},
+        {"key": "department.method", "default": "Method"},
+        {"key": "department.purchase", "default": "Purchase"},
+        {"key": "department.manufacturing", "default": "Manufacturing"},
+        {"key": "department.warehouse", "default": "Warehouse"},
+        {"key": "department.quality", "default": "Quality"},
+        {"key": "department.shipment", "default": "Shipment"},
+        {"key": "department.automation", "default": "Automation"},
+        {"key": "department.electronics", "default": "Electronics"},
+        {"key": "department.international_assembly_electronics", "default": "International Assembly Electronics"},
+        {"key": "department.international_assembly_mechanics", "default": "International Assembly Mechanics"}
+    ]
+    action = [
+        {"key": "action.1", "default": "Send Parts"},
+        {"key": "action.2", "default": "Fix On-spot"},
+        {"key": "action.3", "default": "Customer Support"},
+        {"key": "action.4", "default": "Software Revision"}
+    ]
+    priority = [
+        {"key": "priority.low", "default": "Low"},
+        {"key": "priority.normal", "default": "Normal"},
+        {"key": "priority.high", "default": "High"}
     ]
     t = get_translations()
-    return render_template("upload.html", projects=projects, reasons=reasons, t=t)
+    return render_template("upload.html", projects=projects, reasons=reasons,priority=priority, action=action, department=department, t=t)
 
 
 # -------------------- INFO --------------------

@@ -48,6 +48,7 @@ CREATE TABLE problems (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_number INTEGER NOT NULL,        -- foreign key to projects.id
     df_number TEXT UNIQUE NOT NULL,         -- e.g., df_220820251659
+    recorder_id INTEGER NOT NULL,
     reason TEXT NOT NULL,
     description TEXT,
     photos_id TEXT,                         -- store photo filenames or IDs
