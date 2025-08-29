@@ -165,7 +165,7 @@ def upload():
         df_number = f"df_{timestamp}"
 
         # Create directories for uploads
-        folder_name = f"{df_number}_{project_id}"
+        folder_name = f"{df_number}"
         base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
