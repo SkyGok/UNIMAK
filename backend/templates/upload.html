@@ -34,22 +34,23 @@
             <div class="flex flex-col-4 gap-6 items-center justify-center">
             
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
+                    <select name="project_name" id="project_name" class="w-full border rounded px-3 py-2">
+                        {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.project_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
+                    <select name="customer" id="customer" class="w-full border rounded px-3 py-2">
+                        {% for p in projects %}
+                            <option value="{{ p.customer_name }}">{{ p.customer_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+
 
                 <div>
                     <label for="reason" class="block mb-2 font-medium" data-translate="upload.part_name">Part Name</label>
@@ -97,10 +98,10 @@
                 </div>
 
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.project_manager">Manager</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="manager" class="block mb-2 font-medium" data-translate="upload.project_manager">Manager</label>
+                    <select name="manager" id="manager" class="w-full border rounded px-3 py-2">
+                        {% for m in managers %}
+                            <option value="{{ m.manager_id }}" >{{ m.manager_name }}</option>
                         {% endfor %}
                     </select>
                 </div>

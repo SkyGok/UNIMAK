@@ -6,11 +6,44 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
-
+from flask import send_from_directory
+from flask import request, jsonify
+from flask import request, jsonify
+import requests
 # ------------------------
 # Configure application
 # ------------------------
 app = Flask(__name__)
+
+
+
+
+
+@app.route("/summarize", methods=["POST"])
+def summarize():
+    data = request.get_json()
+    query = data.get("query")
+
+    # Call the NLP Cloud Summarization API
+    api_url = "https://api.nlpcloud.io/v1/bart-large-cnn/summarize"
+    headers = {
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "text": query,
+    }
+    response = requests.post(api_url, headers=headers, json=payload)
+    summary = response.json().get("summary", "Sorry, I couldn't generate a summary.")
+
+    return jsonify({"summary": summary})
+
+
+
+@app.route('/files/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(os.path.join(app.root_path, 'files/uploads'), filename)
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
 db_path = os.path.join(BASE_DIR, "files", "unimak.db")
@@ -100,6 +133,28 @@ def register():
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
+    # Get all managers
+    managers = db.execute("SELECT id, manager_name FROM managers")
+
+    # Get all customers
+    customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
+
+    # Get all projects with manager & customer info for auto-fill
+    projects = db.execute("""
+        SELECT p.id, p.project_number, p.quantity, p.machine_type, p.machine_top_group,
+               m.manager_name, c.customer_name
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+        JOIN customers c ON p.customer_id = c.id
+    """)
+
+    # Separate dictionary for frontend JS if needed
+    data = {
+        "managers": managers,
+        "customers": customers,
+        "projects": projects
+    }
+
     if request.method == "POST":
         project_id = request.form.get("project_number")
         reason = request.form.get("reason")
@@ -109,7 +164,7 @@ def upload():
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
 
-        # Create directories for uploads (optional for now)
+        # Create directories for uploads
         folder_name = f"{df_number}_{project_id}"
         base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
@@ -140,7 +195,7 @@ def upload():
             VALUES (?, ?, ?, ?, ?, ?)
         """, project_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
 
-        # Get the problem_id for steps
+        # Insert first step for problem_steps table
         problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
         db.execute("""
             INSERT INTO problem_steps (problem_id, step_number, df_filename)
@@ -150,13 +205,13 @@ def upload():
         flash("Problem reported successfully!", "success")
         return redirect("/")
 
-    projects = db.execute("SELECT id, project_number FROM projects")
+    # Dropdowns for form
     reasons = [
-        {"key": "reason.missing_components", "default": "Eksik Malzeme"},
-        {"key": "reason.wrong_part", "default": "Uygunsuz Malzeme"},
-        {"key": "reason.damaged_materials", "default": "Arızalı-Malzeme"},
-        {"key": "reason.programming_issue", "default": "Otomasyon-Yazılım"},
-        {"key": "reason.design_issue", "default": "Hatalı Proje"}
+        {"key": "reason.missing_components", "default": "Missing Components"},
+        {"key": "reason.wrong_part", "default": "Wrong Part"},
+        {"key": "reason.damaged_materials", "default": "Damaged Materials"},
+        {"key": "reason.programming_issue", "default": "Automation-Software"},
+        {"key": "reason.design_issue", "default": "Design Issue"}
     ]
     department = [
         {"key": "department.sales", "default": "Sales"},
@@ -184,36 +239,89 @@ def upload():
         {"key": "priority.high", "default": "High"}
     ]
     t = get_translations()
+
     return render_template("upload.html", projects=projects, reasons=reasons,
-                           priority=priority, action=action, department=department, t=t)
+                           priority=priority, action=action, department=department, data=data, t=t, managers = managers)
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])
 @login_required
 def info():
+    # Single query to get managers -> projects -> problems (may produce repeated project rows when multiple problems exist)
     rows = db.execute("""
-        SELECT m.manager_name, p.project_number, pr.df_number, pr.reason, pr.description, pr.photos_id
+        SELECT
+            m.id          AS manager_id,
+            m.manager_name,
+            p.id          AS project_id,
+            p.project_number,
+            p.quantity,
+            p.machine_type,
+            p.machine_top_group,
+            pr.id         AS problem_id,
+            pr.df_number,
+            pr.reason,
+            pr.description    AS problem_description,
+            pr.photos_id,
+            pr.status,
+            pr.record_date
         FROM managers m
         LEFT JOIN projects p ON p.manager_id = m.id
         LEFT JOIN problems pr ON pr.project_id = p.id
-        ORDER BY m.manager_name, p.project_number
+        ORDER BY m.manager_name, p.project_number, pr.record_date DESC
     """)
 
+    # Build nested structure: { manager_name: [ { project }, { project }, ... ] }
     data = {}
+    # helper map to track added projects per manager for O(1) lookup
+    project_index = {}
+
     for row in rows:
-        manager = row["manager_name"]
+        manager = row["manager_name"] or "Unassigned"
+
         if manager not in data:
             data[manager] = []
-        if row["project_number"]:
-            data[manager].append({
-                "project_number": row["project_number"],
-                "df_number": row.get("df_number"),
-                "reason": row.get("reason"),
-                "description": row.get("description"),
-                "photos": row.get("photos_id").split(",") if row.get("photos_id") else []
-            })
+            project_index[manager] = {}
 
-    t = get_translations()
+        project_id = row["project_id"]
+
+        # If there is a project (project_id can be None when manager has no projects)
+        if project_id:
+            # create project entry only once per manager
+            if project_id not in project_index[manager]:
+                project_obj = {
+                    "id": project_id,
+                    "project_number": row["project_number"],
+                    "quantity": row.get("quantity"),
+                    "machine_type": row.get("machine_type"),
+                    "machine_top_group": row.get("machine_top_group"),
+                    # placeholder for project-level description (if you add one later)
+                    "description": row.get("project_description") if "project_description" in row.keys() else None,
+                    "problems": []
+                }
+                project_index[manager][project_id] = project_obj
+                data[manager].append(project_obj)
+
+            # append problem if exists
+            if row["problem_id"]:
+                photos = []
+                if row["photos_id"]:
+                    # photos stored as comma-separated filenames
+                    photos = [p.strip() for p in row["photos_id"].split(",") if p.strip()]
+
+                problem_obj = {
+                    "id": row["problem_id"],
+                    "df_number": row.get("df_number"),
+                    "reason": row.get("reason"),
+                    "description": row.get("problem_description"),
+                    "photos": photos,
+                    "status": row.get("status"),
+                    "record_date": row.get("record_date")
+                }
+                project_index[manager][project_id]["problems"].append(problem_obj)
+
+    # ensure managers with no projects still show up (data[manager] would be empty list)
+    t = get_translations() if callable(globals().get("get_translations", None)) else {}
+
     return render_template("info.html", data=data, t=t)
 
 # -------------------- HISTORY --------------------

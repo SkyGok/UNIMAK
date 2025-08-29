@@ -4,40 +4,70 @@
 
 {% block main %}
 <div class="max-w-4xl mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6" data-translate="info.heading">Managers & Projects</h1>
+  <h1 class="text-2xl font-bold mb-6" data-translate="info.title">Managers & Projects</h1>
 
   {% for manager, projects in data.items() %}
   <div class="mb-4 border rounded-lg shadow-sm bg-white">
-    
-    <!-- Manager header (clickable) -->
-    <button 
+
+    <!-- Manager header (click to toggle projects list) -->
+    <button
       class="w-full flex justify-between items-center px-4 py-2 text-left text-lg font-semibold bg-gray-100 hover:bg-gray-200 rounded-t-lg"
-      onclick="toggleDetails('{{ manager|replace(' ', '_') }}')">
-      <span data-translate="manager_info.manager_name">{{ manager }}</span>
+      onclick="toggleManager('{{ manager|replace(' ', '_') }}')">
+      <span>{{ manager }}</span>
       <span>▼</span>
     </button>
 
-    <!-- Hidden project details -->
-    <div id="details-{{ manager|replace(' ', '_') }}" class="hidden px-4 py-3 border-t">
-      {% if projects %}
+    <!-- Projects under manager -->
+    <div id="mgr-{{ manager|replace(' ', '_') }}" class="hidden px-4 py-3 border-t">
+      {% if projects and projects|length %}
         {% for project in projects %}
           <div class="mb-3 p-3 bg-gray-50 rounded-lg">
-            <p>
-              <span class="font-semibold" data-translate="manager_info.project_number">Project #:</span> 
-              {{ project.number }}
-            </p>
-            <p>
-              <span class="font-semibold" data-translate="manager_info.reason">Reason:</span> 
-              {{ project.reason or "—" }}
-            </p>
-            <p>
-              <span class="font-semibold" data-translate="manager_info.description">Description:</span> 
-              {{ project.description or "—" }}
-            </p>
+            {# include reusable project card (expects 'project' in context) #}
+            {% set project = project %}
+            {% include "partials/project_card.html" %}
+
+            <!-- Toggle problems for this project -->
+            <div class="mt-3">
+              <button
+                class="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                onclick="toggleProject('{{ manager|replace(' ', '_') }}_{{ project.id }}')">
+                Show / Hide Problems
+              </button>
+            </div>
+
+            <!-- Problems list (hidden by default) -->
+            <div id="proj-{{ manager|replace(' ', '_') }}_{{ project.id }}" class="mt-3 hidden">
+              {% if project.problems and project.problems|length %}
+                <ul class="space-y-3">
+                  {% for prob in project.problems %}
+                    <li class="p-3 border rounded bg-white">
+                      <div class="flex items-start gap-4">
+                        <div class="flex-1">
+                          <div class="text-sm text-gray-600"><strong data-translate="manager_info.df">DF:</strong> {{ prob.df_number or '—' }}</div>
+                          <div class="mt-1"><strong data-translate="manager_info.reason">Reason:</strong> {{ prob.reason or '—' }}</div>
+                          <div class="mt-1 text-gray-700"><strong data-translate="manager_info.description">Description:</strong> {{ prob.description or '—' }}</div>
+                          <div class="mt-2 text-xs text-gray-500"><em>{{ prob.record_date }}</em></div>
+                        </div>
+
+                        {% if prob.photos %}
+                        <div class="flex gap-2">
+                          {% for ph in prob.photos %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ ph) }}" alt="photo" class="w-20 h-20 object-cover rounded">
+                          {% endfor %}
+                        </div>
+                        {% endif %}
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-gray-500 mt-2" data-translate="info.no_projects">No problems reported for this project.</p>
+              {% endif %}
+            </div>
           </div>
         {% endfor %}
       {% else %}
-        <p class="text-gray-500" data-translate="manager_info.no_projects">No projects assigned.</p>
+        <p class="text-gray-500" data-translate="info.no_projects">No projects assigned.</p>
       {% endif %}
     </div>
 
@@ -46,9 +76,13 @@
 </div>
 
 <script>
-    function toggleDetails(managerId) {
-        const section = document.getElementById("details-" + managerId);
-        section.classList.toggle("hidden");
-    }
+  function toggleManager(id) {
+    const el = document.getElementById('mgr-' + id);
+    if (el) el.classList.toggle('hidden');
+  }
+  function toggleProject(id) {
+    const el = document.getElementById('proj-' + id);
+    if (el) el.classList.toggle('hidden');
+  }
 </script>
 {% endblock %}

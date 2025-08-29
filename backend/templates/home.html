@@ -27,12 +27,12 @@
         <table id="problemTable" class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.df_number">DF Number</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.project">Project</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.manager">Manager</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.reason">Reason</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.status">Status</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="table.actions">Actions</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.df_number">DF Number</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.project">Project</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.manager">Manager</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.reason">Reason</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.status">Status</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.actions">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -68,7 +68,32 @@
             <p class="text-gray-600" data-translate="sidebar.placeholder">Select a report to view details...</p>
         </div>
     </div>
+
+
+    <!-- Chatbox Button -->
+    <button id="chatboxBtn" class="fixed bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-lg">
+    💬
+    </button>
+
+    <!-- Chatbox Modal -->
+    <div id="chatbox" class="fixed bottom-0 right-0 w-80 bg-white shadow-lg rounded-t-lg p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">DF Problem Summary</h3>
+        <button id="closeChat" class="text-gray-500">✖</button>
+    </div>
+    <div id="chatContent" class="mb-4">
+        <p class="text-gray-600">Select a report to view details...</p>
+    </div>
+    <textarea id="userInput" class="w-full p-2 border rounded mb-4" placeholder="Ask something..." rows="3"></textarea>
+    <button id="sendMessage" class="w-full p-2 bg-blue-600 text-white rounded">Send</button>
+    </div>
+
 </div>
+
+<script>
+    const problemData = {{ data | tojson }};
+</script>
+
 
 <script>
     const featureSelect = document.getElementById("featureSelect");
@@ -109,14 +134,113 @@
     });
 
     function openDetails(df_number) {
-        document.getElementById("detailsPanel").classList.remove("hidden");
-        document.getElementById("detailsContent").innerHTML = `
-            <p><strong data-translate="sidebar.loading">Loading details for:</strong> ${df_number}</p>
+        const detailsPanel = document.getElementById("detailsPanel");
+        const detailsContent = document.getElementById("detailsContent");
+
+        // Find the selected problem
+        const problem = problemData.find(p => p.df_number === df_number);
+        if (!problem) return;
+
+        // Split photos string into array
+        const photos = problem.photos_id ? problem.photos_id.split(",") : [];
+
+        // Build HTML
+        let html = `
+            <p><strong data-translate="sidebar.df_number">DF Number:</strong> ${problem.df_number}</p>
+            <p><strong data-translate="sidebar.project">Project:</strong> ${problem.project_number}</p>
+            <p><strong data-translate="sidebar.manager">Manager:</strong> ${problem.manager_name}</p>
+            <p><strong data-translate="sidebar.reason">Reason:</strong> ${problem.reason}</p>
+            <p><strong data-translate="sidebar.description">Description:</strong></p>
+            <p>${problem.description || "-"}</p>
+            <p><strong data-translate="sidebar.photos">Photos:</strong></p>
+            <div class="flex flex-wrap gap-2 mt-2">
         `;
+
+        photos.forEach(photo => {
+            html += `<img src="/files/uploads/${photo}" class="w-24 h-24 object-cover rounded shadow" />`;
+        });
+
+        html += `</div>`;
+
+        detailsContent.innerHTML = html;
+        detailsPanel.classList.remove("hidden");
     }
+
 
     function closeDetails() {
         document.getElementById("detailsPanel").classList.add("hidden");
     }
+
+    document.getElementById("llmChatHeader").addEventListener("click", () => {
+        const content = document.getElementById("llmChatContent");
+        const inputArea = document.getElementById("llmChatInput").parentElement;
+        const chatBox = document.getElementById("llmChatBox");
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            inputArea.style.display = "flex";
+            chatBox.style.height = "400px";
+        } else {
+            content.style.display = "none";
+            inputArea.style.display = "none";
+            chatBox.style.height = "40px";
+        }
+    });
+
+    document.getElementById("llmChatSend").addEventListener("click", async () => {
+        const input = document.getElementById("llmChatInput");
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        const chatContent = document.getElementById("llmChatContent");
+        chatContent.innerHTML += `<p><strong>You:</strong> ${msg}</p>`;
+        input.value = "";
+
+        // Send to Flask
+        const response = await fetch("/llm_summary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: msg })
+        });
+
+        const data = await response.json();
+        chatContent.innerHTML += `<p><strong>LLM:</strong> ${data.answer}</p>`;
+        chatContent.scrollTop = chatContent.scrollHeight;
+    });
 </script>
+
+<script>
+  const chatboxBtn = document.getElementById("chatboxBtn");
+  const chatbox = document.getElementById("chatbox");
+  const closeChat = document.getElementById("closeChat");
+  const sendMessage = document.getElementById("sendMessage");
+  const userInput = document.getElementById("userInput");
+  const chatContent = document.getElementById("chatContent");
+
+  // Toggle chatbox visibility
+  chatboxBtn.addEventListener("click", () => {
+    chatbox.classList.toggle("hidden");
+  });
+
+  closeChat.addEventListener("click", () => {
+    chatbox.classList.add("hidden");
+  });
+
+  // Handle message sending
+  sendMessage.addEventListener("click", async () => {
+    const query = userInput.value.trim();
+    if (query) {
+      const response = await fetch("/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+      });
+      const data = await response.json();
+      chatContent.innerHTML = `<p class="text-gray-600">${data.summary}</p>`;
+      userInput.value = "";
+    }
+  });
+</script>
+
 {% endblock %}
