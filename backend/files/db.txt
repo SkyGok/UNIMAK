@@ -1,0 +1,90 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    language TEXT DEFAULT 'en' 
+);
+CREATE TABLE sqlite_sequence(name,seq);
+CREATE TABLE managers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    manager_name TEXT NOT NULL UNIQUE
+, manager_mail TEXT);
+CREATE TABLE engineers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    engineer_name TEXT NOT NULL UNIQUE
+, engineer_mail TEXT);
+CREATE TABLE customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_name TEXT NOT NULL UNIQUE,
+    customer_country TEXT NOT NULL
+);
+CREATE TABLE projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_number TEXT NOT NULL UNIQUE,
+    project_name TEXT NOT NULL UNIQUE,
+    manager_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    customer_id INTEGER NOT NULL,
+    FOREIGN KEY (manager_id) REFERENCES managers(id),
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+CREATE TABLE problems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    df_number TEXT UNIQUE NOT NULL,       -- latest df report
+    recorder_id INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    description TEXT,
+    photos_id TEXT,
+    status TEXT DEFAULT 'waiting',        -- 11 different statuses possible
+    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (group_id) REFERENCES groups(id),
+    FOREIGN KEY (recorder_id) REFERENCES users(id)
+);
+CREATE TABLE problem_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    problem_id INTEGER NOT NULL,
+    step_number INTEGER NOT NULL,
+    df_filename TEXT NOT NULL,           -- e.g., df_1.xlsx, df_2.xlsx
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (problem_id) REFERENCES problems(id)
+);
+CREATE TABLE components (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL,
+    component_no TEXT NOT NULL,
+    component_name TEXT NOT NULL,
+    unit_quantity INTEGER NOT NULL,
+    total_quantity INTEGER NOT NULL,
+    weight FLOAT,
+    description TEXT,
+    size TEXT,
+    material TEXT NOT NULL,
+    machine_type TEXT NOT NULL,
+    notes TEXT,
+    working_area TEXT NOT NULL, position_no TEXT NOT NULL,
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);
+CREATE TABLE groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    engineer_id INTEGER NOT NULL,
+    group_name TEXT NOT NULL,
+    group_number TEXT NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (engineer_id) REFERENCES engineers(id),
+);
+
+sqlite> SELECT * FROM groups;
+1|1|1|ROTUS KABINI|25016_010000
+2|1|1|ROBOT+TOOL GRUBU|25016_020000
+3|1|1|HERDING ve HAVA KANALI GRUBU|25016_050000
+4|1|2|NOZUL-ENJEKTOR-VALF GRUBU|25016_140000
+
+
+
+INSERT INTO components WHERE group_id = 3 (position_no,component_no,component_name,unit_quantity,total_quantity,weight,description,size,material,machine_type,notes,working_area) VALUES
+()

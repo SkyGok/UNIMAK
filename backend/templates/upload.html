@@ -14,7 +14,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700" data-translate="upload.project_number">Project Number</label>
                     <select name="project_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        {% for p in projects %}
+                        {% for p in data.projects %}
                             <option value="{{ p.id }}">{{ p.project_number }}</option>
                         {% endfor %}
                     </select>
@@ -22,10 +22,10 @@
 
             <!-- Work Order -->
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.work_order">Work Order</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.work_order">Work Order</label>
+                    <select name="group_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                        {% for g in data.groups %}
+                            <option value="{{ g.id }}">{{ g.group_number }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -36,7 +36,7 @@
                 <div>
                     <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
                     <select name="project_name" id="project_name" class="w-full border rounded px-3 py-2">
-                        {% for p in projects %}
+                        {% for p in data.projects %}
                             <option value="{{ p.id }}">{{ p.project_name }}</option>
                         {% endfor %}
                     </select>
@@ -45,7 +45,7 @@
                 <div>
                     <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
                     <select name="customer" id="customer" class="w-full border rounded px-3 py-2">
-                        {% for p in projects %}
+                        {% for p in data.projects %}
                             <option value="{{ p.customer_name }}">{{ p.customer_name }}</option>
                         {% endfor %}
                     </select>
@@ -53,28 +53,28 @@
 
 
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.part_name">Part Name</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="part_name" class="block mb-2 font-medium" data-translate="upload.part_name">Part Name</label>
+                    <select name="component_no" id="reason" class="w-full border rounded px-3 py-2">
+                        {% for c in data.components %}
+                            <option value="{{ c.component_no }}">{{ c.component_no }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.quantity">Quantity</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="quantity" class="block mb-2 font-medium" data-translate="upload.quantity">Quantity</label>
+                    <select name="quantity" id="quantity" class="w-full border rounded px-3 py-2">
+                        {% for c in data.components %}
+                            <option value="{{ c.total_quantity }}" data-translate="{{ c.total_quantity }}">{{ c.total_quantity }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.unit">Unit</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                    <label for="trials" class="block mb-2 font-medium" data-translate="upload.unit">Unit</label>
+                    <select name="trials" id="trials" class="w-full border rounded px-3 py-2">
+                        {% for t in trials %}
+                            <option value="{{ t.default }}" data-translate="{{ t.key }}">{{ t.default }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -223,4 +223,31 @@
         });
     });
     </script>
+
+    <script>
+    const groups = {{ data.groups | tojson }};
+    const components = {{ data.components | tojson }};
+
+    const projectSelect = document.getElementById('project_select');
+    const groupSelect = document.getElementById('group_select');
+    const componentSelect = document.getElementById('component_select');
+
+    projectSelect.addEventListener('change', () => {
+        const pid = projectSelect.value;
+        groupSelect.innerHTML = '<option value="">Select Group</option>';
+        groups.filter(g => g.project_id == pid).forEach(g => {
+            groupSelect.innerHTML += `<option value="${g.id}">${g.group_number}</option>`;
+        });
+        componentSelect.innerHTML = '<option value="">Select Component</option>';
+    });
+
+    groupSelect.addEventListener('change', () => {
+        const gid = groupSelect.value;
+        componentSelect.innerHTML = '<option value="">Select Component</option>';
+        components.filter(c => c.group_id == gid).forEach(c => {
+            componentSelect.innerHTML += `<option value="${c.id}">${c.component_name}</option>`;
+        });
+    });
+    </script>
+
 {% endblock %}

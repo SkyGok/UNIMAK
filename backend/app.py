@@ -8,7 +8,7 @@ from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
 from flask import send_from_directory
 from flask import request, jsonify
-from flask import request, jsonify
+from dropdowns import trials, reasons, department, action, priority
 import requests
 # ------------------------
 # Configure application
@@ -134,29 +134,51 @@ def register():
 @login_required
 def upload():
     # Get all managers
-    managers = db.execute("SELECT id, manager_name FROM managers")
+    managers = db.execute("SELECT id, manager_name, manager_mail FROM managers")
 
     # Get all customers
     customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
 
-    # Get all projects with manager & customer info for auto-fill
+    # Get all projects
     projects = db.execute("""
-        SELECT p.id, p.project_number, p.quantity, p.machine_type, p.machine_top_group,
+        SELECT p.id, p.project_number, p.project_name, p.quantity,
                m.manager_name, c.customer_name
         FROM projects p
         JOIN managers m ON p.manager_id = m.id
         JOIN customers c ON p.customer_id = c.id
     """)
 
-    # Separate dictionary for frontend JS if needed
+    # Get groups with engineer info (to allow problem linking)
+    groups = db.execute("""
+        SELECT g.id, e.engineer_name, p.project_number, p.project_name, g.group_number, g.group_name
+        FROM groups g
+        JOIN engineers e ON g.engineer_id = e.id
+        JOIN projects p ON g.project_id = p.id
+    """)
+
+    # Get components info (to allow problem linking)
+    components = db.execute("""
+        SELECT c.id, c.component_no, c.component_name, c.unit_quantity, c.total_quantity,
+            c.weight, c.size, c.materials, c.working_area,
+            e.engineer_name, p.project_number, p.project_name
+        FROM components c
+        JOIN groups g ON c.group_id = g.id
+        JOIN engineers e ON g.engineer_id = e.id
+        JOIN projects p ON g.project_id = p.id
+    """)
+
+
     data = {
         "managers": managers,
         "customers": customers,
-        "projects": projects
+        "projects": projects,
+        "groups": groups,
+        "components": components
     }
 
     if request.method == "POST":
-        project_id = request.form.get("project_number")
+        project_id = request.form.get("project_id")
+        group_id = request.form.get("groups.id")
         reason = request.form.get("reason")
         description = request.form.get("description")
         photos = request.files.getlist("photos")
@@ -164,13 +186,11 @@ def upload():
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
 
-        # Create directories for uploads
         folder_name = f"{df_number}"
         base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
 
-        # Save photos
         photo_filenames = []
         for idx, photo in enumerate(photos, start=1):
             if photo and photo.filename:
@@ -178,24 +198,11 @@ def upload():
                 photo.save(os.path.join(pictures_dir, filename))
                 photo_filenames.append(filename)
 
-        # Save description.txt
-        description_file = os.path.join(base_dir, f"{folder_name}.txt")
-        with open(description_file, "w", encoding="utf-8") as f:
-            f.write(f"User ID: {session['user_id']}\n")
-            f.write(f"Project ID: {project_id}\n")
-            f.write(f"DF Number: {df_number}\n")
-            f.write(f"Reason: {reason}\n")
-            f.write(f"Description: {description}\n")
-            f.write(f"Photos: {', '.join(photo_filenames)}\n")
-            f.write(f"Timestamp: {timestamp}\n")
-
-        # Insert into problems table
         db.execute("""
-            INSERT INTO problems (project_id, df_number, recorder_id, reason, description, photos_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, project_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
+            INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, project_id, group_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
 
-        # Insert first step for problem_steps table
         problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
         db.execute("""
             INSERT INTO problem_steps (problem_id, step_number, df_filename)
@@ -204,44 +211,17 @@ def upload():
 
         flash("Problem reported successfully!", "success")
         return redirect("/")
-
-    # Dropdowns for form
-    reasons = [
-        {"key": "reason.missing_components", "default": "Missing Components"},
-        {"key": "reason.wrong_part", "default": "Wrong Part"},
-        {"key": "reason.damaged_materials", "default": "Damaged Materials"},
-        {"key": "reason.programming_issue", "default": "Automation-Software"},
-        {"key": "reason.design_issue", "default": "Design Issue"}
-    ]
-    department = [
-        {"key": "department.sales", "default": "Sales"},
-        {"key": "department.design", "default": "Design"},
-        {"key": "department.method", "default": "Method"},
-        {"key": "department.purchase", "default": "Purchase"},
-        {"key": "department.manufacturing", "default": "Manufacturing"},
-        {"key": "department.warehouse", "default": "Warehouse"},
-        {"key": "department.quality", "default": "Quality"},
-        {"key": "department.shipment", "default": "Shipment"},
-        {"key": "department.automation", "default": "Automation"},
-        {"key": "department.electronics", "default": "Electronics"},
-        {"key": "department.international_assembly_electronics", "default": "International Assembly Electronics"},
-        {"key": "department.international_assembly_mechanics", "default": "International Assembly Mechanics"}
-    ]
-    action = [
-        {"key": "action.1", "default": "Send Parts"},
-        {"key": "action.2", "default": "Fix On-spot"},
-        {"key": "action.3", "default": "Customer Support"},
-        {"key": "action.4", "default": "Software Revision"}
-    ]
-    priority = [
-        {"key": "priority.low", "default": "Low"},
-        {"key": "priority.normal", "default": "Normal"},
-        {"key": "priority.high", "default": "High"}
-    ]
     t = get_translations()
 
-    return render_template("upload.html", projects=projects, reasons=reasons,
-                           priority=priority, action=action, department=department, data=data, t=t, managers = managers)
+    return render_template("upload.html", 
+                           reasons=reasons,
+                           priority=priority, 
+                           action=action, 
+                           department=department, 
+                           data=data, 
+                           trials=trials, 
+                           t=t, 
+                           managers = managers)
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])
@@ -250,17 +230,15 @@ def info():
     # Single query to get managers -> projects -> problems (may produce repeated project rows when multiple problems exist)
     rows = db.execute("""
         SELECT
-            m.id          AS manager_id,
+            m.id AS manager_id,
             m.manager_name,
-            p.id          AS project_id,
+            p.id AS project_id,
             p.project_number,
             p.quantity,
-            p.machine_type,
-            p.machine_top_group,
-            pr.id         AS problem_id,
+            pr.id AS problem_id,
             pr.df_number,
             pr.reason,
-            pr.description    AS problem_description,
+            pr.description AS problem_description,
             pr.photos_id,
             pr.status,
             pr.record_date
@@ -269,6 +247,7 @@ def info():
         LEFT JOIN problems pr ON pr.project_id = p.id
         ORDER BY m.manager_name, p.project_number, pr.record_date DESC
     """)
+
 
     # Build nested structure: { manager_name: [ { project }, { project }, ... ] }
     data = {}
