@@ -5,165 +5,105 @@
 {% endblock %}
 
 {% block main %}
-    <div class="p-6 max-w-10xl mx-auto bg-white rounded-lg shadow-lg">
+    <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         <h1 class="text-2xl font-bold text-gray-800 mb-6" data-translate="upload.title">Report a Project Issue</h1>
         
         <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
             
             <!-- Project Number -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.project_number">Project Number</label>
-                    <select name="project_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        {% for p in data.projects %}
-                            <option value="{{ p.id }}">{{ p.project_number }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-            <!-- Work Order -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.work_order">Work Order</label>
-                    <select name="group_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        {% for g in data.groups %}
-                            <option value="{{ g.id }}">{{ g.group_number }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-            <!-- Automated Selection Bars (If you select one the rest will be selected automatically from the database using project.id) -->
-            <div class="flex flex-col-4 gap-6 items-center justify-center">
-            
-                <div>
-                    <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
-                    <select name="project_name" id="project_name" class="w-full border rounded px-3 py-2">
-                        {% for p in data.projects %}
-                            <option value="{{ p.id }}">{{ p.project_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
-                    <select name="customer" id="customer" class="w-full border rounded px-3 py-2">
-                        {% for p in data.projects %}
-                            <option value="{{ p.customer_name }}">{{ p.customer_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-
-                <div>
-                    <label for="part_name" class="block mb-2 font-medium" data-translate="upload.part_name">Part Name</label>
-                    <select name="component_no" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for c in data.components %}
-                            <option value="{{ c.component_no }}">{{ c.component_no }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="quantity" class="block mb-2 font-medium" data-translate="upload.quantity">Quantity</label>
-                    <select name="quantity" id="quantity" class="w-full border rounded px-3 py-2">
-                        {% for c in data.components %}
-                            <option value="{{ c.total_quantity }}" data-translate="{{ c.total_quantity }}">{{ c.total_quantity }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="trials" class="block mb-2 font-medium" data-translate="upload.unit">Unit</label>
-                    <select name="trials" id="trials" class="w-full border rounded px-3 py-2">
-                        {% for t in trials %}
-                            <option value="{{ t.default }}" data-translate="{{ t.key }}">{{ t.default }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.machine_main_group">Machine Main Group</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="reason" class="block mb-2 font-medium" data-translate="upload.machine_type">Machine Type</label>
-                    <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
-                        {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="manager" class="block mb-2 font-medium" data-translate="upload.project_manager">Manager</label>
-                    <select name="manager" id="manager" class="w-full border rounded px-3 py-2">
-                        {% for m in managers %}
-                            <option value="{{ m.manager_id }}" >{{ m.manager_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-translate="upload.project_number">Project Number</label>
+                <select name="project_id" id="project_select"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">Select Project</option>
+                    {% for p in data.projects %}
+                        <option value="{{ p.id }}">{{ p.project_number }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <!-- Bar Section for choosing pre-determined problems -->
-            <div class="flex flex-col-4 gap-6 items-center justify-center">
+            <!-- Work Order -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-translate="upload.work_order">Work Order</label>
+                <select name="group_id" id="group_select"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">Select Group</option>
+                </select>
+            </div>
+
+            <!-- Component -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-translate="upload.component">Component</label>
+                <select name="component_id" id="component_select"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">Select Component</option>
+                </select>
+            </div>
+
+            <!-- Auto-filled details -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
+                    <input type="text" id="project_name" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
+                    <input type="text" id="customer" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label for="manager" class="block mb-2 font-medium" data-translate="upload.manager">Manager</label>
+                    <input type="text" id="manager" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+                </div>
+            </div>
+
+            <!-- Problem classification -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                     <label for="reason" class="block mb-2 font-medium" data-translate="upload.reason">Reason</label>
                     <select name="reason" id="reason" class="w-full border rounded px-3 py-2">
                         {% for r in reasons %}
-                            <option value="{{ r.default }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                            <option value="{{ r.key }}" data-translate="{{ r.key }}">{{ r.default }}</option>
                         {% endfor %}
                     </select>
                 </div>
-
                 <div>
-                    <label for="department" class="block mb-2 font-medium" data-translate="upload.department">
-                        Department
-                    </label>
+                    <label for="department" class="block mb-2 font-medium" data-translate="upload.department">Department</label>
                     <select name="department" id="department" class="w-full border rounded px-3 py-2">
                         {% for d in department %}
-                            <option value="{{ d.default }}" data-translate="{{ d.key }}">{{ d.default }}</option>
+                            <option value="{{ d.key }}" data-translate="{{ d.key }}">{{ d.default }}</option>
                         {% endfor %}
                     </select>
                 </div>
-
-
                 <div>
-                    <label for="action" class="block mb-2 font-medium" data-translate="upload.action">Aksiyon</label>
+                    <label for="action" class="block mb-2 font-medium" data-translate="upload.action">Action</label>
                     <select name="action" id="action" class="w-full border rounded px-3 py-2">
                         {% for a in action %}
-                            <option value="{{ a.default }}" data-translate="{{ a.key }}">{{ a.default }}</option>
+                            <option value="{{ a.key }}" data-translate="{{ a.key }}">{{ a.default }}</option>
                         {% endfor %}
                     </select>
                 </div>
-
                 <div>
-                    <label for="priority" class="block mb-2 font-medium" data-translate="upload.priority">Öncelik</label>
+                    <label for="priority" class="block mb-2 font-medium" data-translate="upload.priority">Priority</label>
                     <select name="priority" id="priority" class="w-full border rounded px-3 py-2">
                         {% for p in priority %}
-                            <option value="{{ p.default }}" data-translate="{{ p.key }}">{{ p.default }}</option>
+                            <option value="{{ p.key }}" data-translate="{{ p.key }}">{{ p.default }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                
             </div>
             
             <!-- Description -->
             <div>
                 <label class="block text-sm font-medium text-gray-700" data-translate="upload.description">Description</label>
                 <textarea name="description" rows="4" placeholder="Describe the problem in detail"
-                    data-translate-placeholder="upload.description_placeholder"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
+                          data-translate-placeholder="upload.description_placeholder"
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
             </div>
 
-            <!-- Image Upload with + Button -->
+            <!-- Image Upload -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="upload.upload_photos">Upload Photos (max 6)</label>
                 <div id="imagePreview" class="flex flex-wrap gap-4">
-                    <!-- Add Photo Button -->
                     <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                         <span class="text-3xl text-gray-400">+</span>
                         <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
@@ -171,11 +111,11 @@
                 </div>
             </div>
             
-            <!-- Submit Button -->
+            <!-- Submit -->
             <div class="flex justify-end">
                 <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none"
-                    data-translate="upload.submit">
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none"
+                        data-translate="upload.submit">
                     Submit Report
                 </button>
             </div>
@@ -183,30 +123,26 @@
     </div>
 
     <script>
+    // --- Image preview ---
     const photoInput = document.getElementById('photoInput');
     const imagePreview = document.getElementById('imagePreview');
-
     let filesArray = [];
 
     photoInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-
         if (filesArray.length + files.length > 6) {
-            alert("You can only upload up to 6 images."); // Optional: also make this translatable later
+            alert("You can only upload up to 6 images.");
             return;
         }
-
         files.forEach(file => {
             filesArray.push(file);
             const reader = new FileReader();
             reader.onload = (event) => {
                 const imgContainer = document.createElement('div');
                 imgContainer.classList.add('relative', 'w-24', 'h-24');
-
                 const img = document.createElement('img');
                 img.src = event.target.result;
                 img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-lg', 'shadow');
-
                 const removeBtn = document.createElement('button');
                 removeBtn.innerHTML = "×";
                 removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
@@ -214,7 +150,6 @@
                     filesArray = filesArray.filter(f => f !== file);
                     imgContainer.remove();
                 });
-
                 imgContainer.appendChild(img);
                 imgContainer.appendChild(removeBtn);
                 imagePreview.insertBefore(imgContainer, imagePreview.firstChild);
@@ -222,30 +157,65 @@
             reader.readAsDataURL(file);
         });
     });
-    </script>
 
-    <script>
+    // --- Data from Flask ---
+    const projects = {{ data.projects | tojson }};
     const groups = {{ data.groups | tojson }};
     const components = {{ data.components | tojson }};
+    const managers = {{ data.managers | tojson }};
+    const customers = {{ data.customers | tojson }};
 
+    // --- DOM Elements ---
     const projectSelect = document.getElementById('project_select');
     const groupSelect = document.getElementById('group_select');
     const componentSelect = document.getElementById('component_select');
 
+    const projectNameField = document.getElementById('project_name');
+    const customerField = document.getElementById('customer');
+    const managerField = document.getElementById('manager');
+
+    // --- Project change ---
     projectSelect.addEventListener('change', () => {
         const pid = projectSelect.value;
+
+        // Clear & populate group select
         groupSelect.innerHTML = '<option value="">Select Group</option>';
         groups.filter(g => g.project_id == pid).forEach(g => {
-            groupSelect.innerHTML += `<option value="${g.id}">${g.group_number}</option>`;
+            const option = document.createElement('option');
+            option.value = g.id;
+            option.textContent = g.group_number;
+            groupSelect.appendChild(option);
         });
+
+        // Clear components
         componentSelect.innerHTML = '<option value="">Select Component</option>';
+
+        // Auto-fill project details
+        const proj = projects.find(p => p.id == pid);
+        if (proj) {
+            projectNameField.value = proj.project_name || '';
+            customerField.value = proj.customer_name || '';
+            // Find manager based on project.manager_id
+            const mgr = managers.find(m => m.id == proj.manager_id);
+            managerField.value = mgr ? mgr.manager_name : '';
+        } else {
+            projectNameField.value = '';
+            customerField.value = '';
+            managerField.value = '';
+        }
     });
 
+    // --- Group change ---
     groupSelect.addEventListener('change', () => {
         const gid = groupSelect.value;
+
+        // Clear & populate component select
         componentSelect.innerHTML = '<option value="">Select Component</option>';
         components.filter(c => c.group_id == gid).forEach(c => {
-            componentSelect.innerHTML += `<option value="${c.id}">${c.component_name}</option>`;
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.textContent = c.component_no;
+            componentSelect.appendChild(option);
         });
     });
     </script>
