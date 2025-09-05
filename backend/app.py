@@ -1,6 +1,6 @@
 import os
 from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, redirect, render_template, request, session,url_for
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -14,8 +14,6 @@ import requests
 # Configure application
 # ------------------------
 app = Flask(__name__)
-
-
 
 
 
@@ -40,13 +38,13 @@ def summarize():
 
 
 
-@app.route('/files/uploads/<filename>')
+@app.route('/static/files/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(os.path.join(app.root_path, 'files/uploads'), filename)
+    return send_from_directory(os.path.join(app.root_path, '/static/files/uploads'), filename)
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
-db_path = os.path.join(BASE_DIR, "files", "unimak.db")
+db_path = os.path.join(BASE_DIR, "/static/files", "unimak.db")
 
 # Configure session
 app.config["SESSION_PERMANENT"] = False
@@ -54,7 +52,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Connect to database
-db = SQL("sqlite:///files/unimak.db")
+db = SQL("sqlite:///static/files/unimak.db")
 
 # ------------------------
 # After request: prevent caching
@@ -79,6 +77,17 @@ def index():
         JOIN managers m ON p.manager_id = m.id
         ORDER BY pr.record_date DESC
     """)
+
+    # Build photo URLs
+    for row in rows:
+        photos = []
+        if row["photos_id"]:  # if not null
+            filenames = row["photos_id"].split(",")
+            for filename in filenames:
+                photos.append(
+                    url_for("static", filename=f"files/uploads/{row['df_number']}/pictures/{filename.strip()}")
+                )
+        row["photo_urls"] = photos
     t = get_translations()
     return render_template("home.html", data=rows, t=t)
 
@@ -189,7 +198,7 @@ def upload():
         df_number = f"df_{timestamp}"
 
         folder_name = f"{df_number}"
-        base_dir = os.path.join(os.path.dirname(__file__), "files/uploads", folder_name)
+        base_dir = os.path.join(os.path.dirname(__file__), "/static/files/uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
 
@@ -326,8 +335,9 @@ def history():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
+    image = url_for('static', filename = 'files/uploads/df_050925090430/pictures/df_050925090430_1.jpg')
     t = get_translations()
-    return render_template("admin.html", t=t)
+    return render_template("admin.html", t=t, pic = image)
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":

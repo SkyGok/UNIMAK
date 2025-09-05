@@ -39,8 +39,8 @@
                 {% for p in data %}
                 <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="openDetails('{{ p.df_number }}')">
                     <td class="px-6 py-4 font-medium text-gray-900">{{ p.df_number }}</td>
-                    <td class="px-6 py-4 text-gray-700">{{ p.project }}</td>
-                    <td class="px-6 py-4 text-gray-700">{{ p.manager }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.project_number }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.manager_name }}</td>
                     <td class="px-6 py-4 text-red-500 font-semibold">{{ p.reason }}</td>
                     <td class="px-6 py-4">
                         {% if p.status == "Completed" %}
@@ -58,6 +58,9 @@
                 {% endfor %}
             </tbody>
         </table>
+
+
+        
     </div>
 
     <!-- Sidebar (Hidden by default, opens on row click) -->
@@ -137,14 +140,9 @@
         const detailsPanel = document.getElementById("detailsPanel");
         const detailsContent = document.getElementById("detailsContent");
 
-        // Find the selected problem
         const problem = problemData.find(p => p.df_number === df_number);
         if (!problem) return;
 
-        // Split photos string into array
-        const photos = problem.photos_id ? problem.photos_id.split(",") : [];
-
-        // Build HTML
         let html = `
             <p><strong data-translate="sidebar.df_number">DF Number:</strong> ${problem.df_number}</p>
             <p><strong data-translate="sidebar.project">Project:</strong> ${problem.project_number}</p>
@@ -156,17 +154,21 @@
             <div class="flex flex-wrap gap-2 mt-2">
         `;
 
-        photos.forEach(photo => {
-            html += `<img src="files/uploads/${problem.df_number}/pictures/${photo}" class="w-24 h-24 object-cover rounded shadow" />`;
-        });
-
-
+        if (!problem.photo_urls || problem.photo_urls.length === 0) {
+            html += `<p class="text-gray-500">No photos available</p>`;
+        } else {
+            problem.photo_urls.forEach(photo => {
+                html += `<img src="${photo}" class="w-24 h-24 object-cover rounded shadow" />`;
+            });
+        }
 
         html += `</div>`;
 
         detailsContent.innerHTML = html;
         detailsPanel.classList.remove("hidden");
     }
+
+
 
 
     function closeDetails() {
@@ -243,6 +245,8 @@
       userInput.value = "";
     }
   });
+
+  
 </script>
 
 {% endblock %}
