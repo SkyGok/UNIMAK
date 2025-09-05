@@ -182,7 +182,7 @@
             if (projectId) {
             const proj = projects.find(p => String(p.id) === String(projectId));
             if (proj) {
-                filtered = groups.filter(g => String(g.project_number) === String(proj.project_number));
+                filtered = groups.filter(g => String(g.project_id) === String(projectId));
             }
             }
 

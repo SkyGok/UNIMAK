@@ -150,11 +150,12 @@ def upload():
 
     # Get groups with engineer info (to allow problem linking)
     groups = db.execute("""
-        SELECT g.id, e.engineer_name, p.project_number, p.project_name, g.group_number, g.group_name
+        SELECT g.id, g.project_id, e.engineer_name,
+            g.group_number, g.group_name
         FROM groups g
         JOIN engineers e ON g.engineer_id = e.id
-        JOIN projects p ON g.project_id = p.id
     """)
+
 
     # Get components info (to allow problem linking)
     components = db.execute("""
@@ -179,7 +180,7 @@ def upload():
 
     if request.method == "POST":
         project_id = request.form.get("project_id")
-        group_id = request.form.get("groups.id")
+        group_id   = request.form.get("group_id")   # ✅ match the HTML form name
         reason = request.form.get("reason")
         description = request.form.get("description")
         photos = request.files.getlist("photos")
@@ -198,7 +199,9 @@ def upload():
                 filename = secure_filename(f"{folder_name}_{idx}.jpg")
                 photo.save(os.path.join(pictures_dir, filename))
                 photo_filenames.append(filename)
-
+  
+        print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
+  
         db.execute("""
             INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
