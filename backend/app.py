@@ -158,13 +158,14 @@ def upload():
 
     # Get components info (to allow problem linking)
     components = db.execute("""
-        SELECT c.id, c.component_no, c.component_name, c.unit_quantity, c.total_quantity,
-            c.weight, c.size, c.materials, c.working_area,
-            e.engineer_name, p.project_number, p.project_name
-        FROM components c
-        JOIN groups g ON c.group_id = g.id
-        JOIN engineers e ON g.engineer_id = e.id
-        JOIN projects p ON g.project_id = p.id
+        SELECT
+            c.id,
+            c.group_id,            -- needed for filtering
+            c.component_no,
+            c.component_name,
+            c.unit_quantity,
+            c.total_quantity
+        FROM components c;
     """)
 
 

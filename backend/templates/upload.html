@@ -158,66 +158,94 @@
         });
     });
 
-    // --- Data from Flask ---
-    const projects = {{ data.projects | tojson }};
-    const groups = {{ data.groups | tojson }};
-    const components = {{ data.components | tojson }};
-    const managers = {{ data.managers | tojson }};
-    const customers = {{ data.customers | tojson }};
+        // --- Data from Flask ---
+        const projects   = {{ data.projects   | tojson }};
+        const groups     = {{ data.groups     | tojson }};
+        const components = {{ data.components | tojson }};
+        const managers   = {{ data.managers   | tojson }};
+        const customers  = {{ data.customers  | tojson }};
 
-    // --- DOM Elements ---
-    const projectSelect = document.getElementById('project_select');
-    const groupSelect = document.getElementById('group_select');
-    const componentSelect = document.getElementById('component_select');
+        // --- DOM Elements ---
+        const projectSelect   = document.getElementById('project_select');
+        const groupSelect     = document.getElementById('group_select');
+        const componentSelect = document.getElementById('component_select');
 
-    const projectNameField = document.getElementById('project_name');
-    const customerField = document.getElementById('customer');
-    const managerField = document.getElementById('manager');
+        const projectNameField = document.getElementById('project_name');
+        const customerField    = document.getElementById('customer');
+        const managerField     = document.getElementById('manager');
 
-    // --- Project change ---
-    projectSelect.addEventListener('change', () => {
-        const pid = projectSelect.value;
+        // Populate GROUPS. If a project is selected, match via project_number. Otherwise, show all.
+        function populateGroups(projectId = null) {
+            groupSelect.innerHTML = '<option value="">Select Group</option>';
 
-        // Clear & populate group select
-        groupSelect.innerHTML = '<option value="">Select Group</option>';
-        groups.filter(g => g.project_id == pid).forEach(g => {
-            const option = document.createElement('option');
-            option.value = g.id;
-            option.textContent = g.group_number;
-            groupSelect.appendChild(option);
-        });
+            let filtered = groups;
+            if (projectId) {
+            const proj = projects.find(p => String(p.id) === String(projectId));
+            if (proj) {
+                filtered = groups.filter(g => String(g.project_number) === String(proj.project_number));
+            }
+            }
 
-        // Clear components
-        componentSelect.innerHTML = '<option value="">Select Component</option>';
-
-        // Auto-fill project details
-        const proj = projects.find(p => p.id == pid);
-        if (proj) {
-            projectNameField.value = proj.project_name || '';
-            customerField.value = proj.customer_name || '';
-            // Find manager based on project.manager_id
-            const mgr = managers.find(m => m.id == proj.manager_id);
-            managerField.value = mgr ? mgr.manager_name : '';
-        } else {
-            projectNameField.value = '';
-            customerField.value = '';
-            managerField.value = '';
+            filtered.forEach(g => {
+            const opt = document.createElement('option');
+            // Adjust display label if needed:
+            opt.textContent = g.group_number ?? g.group_name ?? g.id; 
+            opt.value = g.id;
+            groupSelect.appendChild(opt);
+            });
         }
-    });
 
-    // --- Group change ---
-    groupSelect.addEventListener('change', () => {
-        const gid = groupSelect.value;
+        // Populate COMPONENTS. If a group is selected, filter by group_id. Otherwise, show all.
+        function populateComponents(groupId = null) {
+            componentSelect.innerHTML = '<option value="">Select Component</option>';
 
-        // Clear & populate component select
-        componentSelect.innerHTML = '<option value="">Select Component</option>';
-        components.filter(c => c.group_id == gid).forEach(c => {
-            const option = document.createElement('option');
-            option.value = c.id;
-            option.textContent = c.component_no;
-            componentSelect.appendChild(option);
+            const filtered = groupId
+            ? components.filter(c => String(c.group_id) === String(groupId))
+            : components;
+
+            filtered.forEach(c => {
+            const opt = document.createElement('option');
+            // Adjust display label if needed:
+            opt.textContent = c.component_no ?? c.component_name ?? c.id;
+            opt.value = c.id;
+            componentSelect.appendChild(opt);
+            });
+        }
+
+        // --- Project change ---
+        projectSelect.addEventListener('change', () => {
+            const pid = projectSelect.value;
+
+            // Filter groups by project
+            populateGroups(pid || null);
+
+            // Reset components until a group is chosen
+            populateComponents(null);
+
+            // Auto-fill project details
+            const proj = projects.find(p => String(p.id) === String(pid));
+            if (proj) {
+            projectNameField.value = proj.project_name || '';
+            customerField.value    = proj.customer_name || '';
+            // Your projects already include manager_name; no need to look up by manager_id
+            managerField.value     = proj.manager_name || '';
+            } else {
+            projectNameField.value = '';
+            customerField.value    = '';
+            managerField.value     = '';
+            }
         });
-    });
+
+        // --- Group change ---
+        groupSelect.addEventListener('change', () => {
+            const gid = groupSelect.value;
+            populateComponents(gid || null);
+        });
+
+        // Initial load: show all groups + all components
+        populateGroups();
+        populateComponents();
     </script>
+
 
 {% endblock %}
