@@ -189,7 +189,7 @@ def upload():
 
     if request.method == "POST":
         project_id = request.form.get("project_id")
-        group_id   = request.form.get("group_id")   # ✅ match the HTML form name
+        group_id = request.form.get("group_id")
         reason = request.form.get("reason")
         description = request.form.get("description")
         photos = request.files.getlist("photos")
@@ -197,8 +197,9 @@ def upload():
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
 
-        folder_name = f"{df_number}"
-        base_dir = os.path.join(os.path.dirname(__file__), "/static/files/uploads", folder_name)
+        folder_name = df_number
+        # ✅ Corrected: no leading slash, path relative to project
+        base_dir = os.path.join(os.path.dirname(__file__), "static", "files", "uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
 
@@ -208,9 +209,9 @@ def upload():
                 filename = secure_filename(f"{folder_name}_{idx}.jpg")
                 photo.save(os.path.join(pictures_dir, filename))
                 photo_filenames.append(filename)
-  
+
         print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
-  
+
         db.execute("""
             INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -224,17 +225,18 @@ def upload():
 
         flash("Problem reported successfully!", "success")
         return redirect("/")
-    t = get_translations()
 
+    t = get_translations()
     return render_template("upload.html", 
-                           reasons=reasons,
-                           priority=priority, 
-                           action=action, 
-                           department=department, 
-                           data=data, 
-                           trials=trials, 
-                           t=t, 
-                           managers = managers)
+                        reasons=reasons,
+                        priority=priority, 
+                        action=action, 
+                        department=department, 
+                        data=data, 
+                        trials=trials, 
+                        t=t, 
+                        managers=managers)
+
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])
