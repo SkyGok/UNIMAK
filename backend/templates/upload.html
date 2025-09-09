@@ -50,17 +50,6 @@
             <!-- reporting problematic multipla components or problems  -->
             <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
 
-                    <!-- Component -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.component">Component</label>
-                    <select name="component_id" id="component_select"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        <option value="">Select Component</option>
-                    </select>
-                </div>
-
-                <!-- Problem classification -->
-                 <!-- Components Section -->
         <div id="componentsContainer" class="space-y-6 mt-6">
             <div class="component-row p-4 border rounded-lg shadow-sm bg-gray-50 relative">
                 <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700 remove-component">&times;</button>
@@ -144,156 +133,165 @@
             </div>
         </form>
     </div>
+<script>
+let componentIndex = 1;
 
-    <script>
-        let componentIndex = 1;
+// --- Dynamic Components ---
+function createComponentRow(index) {
+    const template = document.querySelector('.component-row');
+    const clone = template.cloneNode(true);
 
-        // --- Dynamic Components ---
-        document.getElementById('addComponentBtn').addEventListener('click', () => {
-            const container = document.getElementById('componentsContainer');
-            const firstRow = container.querySelector('.component-row');
-            const clone = firstRow.cloneNode(true);
-
-            clone.querySelectorAll('select, textarea').forEach(el => {
-                el.name = el.name.replace(/\d+/, componentIndex);
-                if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                else if (el.tagName === 'TEXTAREA') el.value = '';
-            });
-
-            clone.querySelector('.remove-component').addEventListener('click', () => clone.remove());
-
-            container.appendChild(clone);
-            componentIndex++;
-        });
-
-        // Remove initial row button
-        document.querySelectorAll('.remove-component').forEach(btn => {
-            btn.addEventListener('click', () => btn.closest('.component-row').remove());
-        });
-
-    // --- Image preview ---
-    const photoInput = document.getElementById('photoInput');
-    const imagePreview = document.getElementById('imagePreview');
-    let filesArray = [];
-
-    photoInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        if (filesArray.length + files.length > 6) {
-            alert("You can only upload up to 6 images.");
-            return;
-        }
-        files.forEach(file => {
-            filesArray.push(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imgContainer = document.createElement('div');
-                imgContainer.classList.add('relative', 'w-24', 'h-24');
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-lg', 'shadow');
-                const removeBtn = document.createElement('button');
-                removeBtn.innerHTML = "×";
-                removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
-                removeBtn.addEventListener('click', () => {
-                    filesArray = filesArray.filter(f => f !== file);
-                    imgContainer.remove();
-                });
-                imgContainer.appendChild(img);
-                imgContainer.appendChild(removeBtn);
-                imagePreview.insertBefore(imgContainer, imagePreview.firstChild);
-            };
-            reader.readAsDataURL(file);
-        });
+    clone.querySelectorAll('select, textarea').forEach(el => {
+        el.name = el.name.replace(/\d+/, index);
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else if (el.tagName === 'TEXTAREA') el.value = '';
     });
 
-        // --- Data from Flask ---
-        const projects   = {{ data.projects   | tojson }};
-        const groups     = {{ data.groups     | tojson }};
-        const components = {{ data.components | tojson }};
-        const managers   = {{ data.managers   | tojson }};
-        const customers  = {{ data.customers  | tojson }};
+    const removeBtn = clone.querySelector('.remove-component');
+    removeBtn.addEventListener('click', () => clone.remove());
 
-        // --- DOM Elements ---
-        const projectSelect   = document.getElementById('project_select');
-        const groupSelect     = document.getElementById('group_select');
-        const componentSelect = document.getElementById('component_select');
+    populateDropdowns(clone);
 
-        const projectNameField = document.getElementById('project_name');
-        const customerField    = document.getElementById('customer');
-        const managerField     = document.getElementById('manager');
+    // Listen to group change for this row only
+    const groupSelectRow = document.getElementById('group_select');
+    const componentSelectRow = clone.querySelector('.component_select');
+    groupSelectRow.addEventListener('change', () => populateComponentsForRow(componentSelectRow, groupSelectRow.value));
 
-        // Populate GROUPS. If a project is selected, match via project_number. Otherwise, show all.
-        function populateGroups(projectId = null) {
-            groupSelect.innerHTML = '<option value="">Select Group</option>';
+    return clone;
+}
 
-            let filtered = groups;
-            if (projectId) {
-            const proj = projects.find(p => String(p.id) === String(projectId));
-            if (proj) {
-                filtered = groups.filter(g => String(g.project_id) === String(projectId));
-            }
-            }
+function populateDropdowns(row) {
+    const reasonSelect = row.querySelector('select[name$="[reason]"]');
+    const departmentSelect = row.querySelector('select[name$="[department]"]');
+    const actionSelect = row.querySelector('select[name$="[action]"]');
+    const prioritySelect = row.querySelector('select[name$="[priority]"]');
 
-            filtered.forEach(g => {
-            const opt = document.createElement('option');
-            // Adjust display label if needed:
-            opt.textContent = g.group_number ?? g.group_name ?? g.id; 
-            opt.value = g.id;
-            groupSelect.appendChild(opt);
-            });
-        }
+    reasonSelect.innerHTML = '';
+    departmentSelect.innerHTML = '';
+    actionSelect.innerHTML = '';
+    prioritySelect.innerHTML = '';
 
-        // Populate COMPONENTS. If a group is selected, filter by group_id. Otherwise, show all.
-        function populateComponents(groupId = null) {
-            componentSelect.innerHTML = '<option value="">Select Component</option>';
+    data.reasons.forEach(r => { const opt = document.createElement('option'); opt.value = r.key; opt.textContent = r.default; reasonSelect.appendChild(opt); });
+    data.department.forEach(d => { const opt = document.createElement('option'); opt.value = d.key; opt.textContent = d.default; departmentSelect.appendChild(opt); });
+    data.action.forEach(a => { const opt = document.createElement('option'); opt.value = a.key; opt.textContent = a.default; actionSelect.appendChild(opt); });
+    data.priority.forEach(p => { const opt = document.createElement('option'); opt.value = p.key; opt.textContent = p.default; prioritySelect.appendChild(opt); });
+}
 
-            const filtered = groupId
-            ? components.filter(c => String(c.group_id) === String(groupId))
-            : components;
+function populateComponentsForRow(componentSelectRow, groupId = null) {
+    componentSelectRow.innerHTML = '<option value="">Select Component</option>';
+    const filtered = groupId ? data.components.filter(c => String(c.group_id) === String(groupId)) : data.components;
+    filtered.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.component_no ?? c.component_name ?? c.id;
+        componentSelectRow.appendChild(opt);
+    });
+}
 
-            filtered.forEach(c => {
-            const opt = document.createElement('option');
-            // Adjust display label if needed:
-            opt.textContent = c.component_no ?? c.component_name ?? c.id;
-            opt.value = c.id;
-            componentSelect.appendChild(opt);
-            });
-        }
+// Add component row
+document.getElementById('addComponentBtn').addEventListener('click', () => {
+    const container = document.getElementById('componentsContainer');
+    const newRow = createComponentRow(componentIndex);
+    container.appendChild(newRow);
+    componentIndex++;
+});
 
-        // --- Project change ---
-        projectSelect.addEventListener('change', () => {
-            const pid = projectSelect.value;
+// Initial row remove button
+document.querySelectorAll('.remove-component').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.component-row').remove());
+});
 
-            // Filter groups by project
-            populateGroups(pid || null);
+// --- Image preview ---
+const photoInput = document.getElementById('photoInput');
+const imagePreview = document.getElementById('imagePreview');
+let filesArray = [];
 
-            // Reset components until a group is chosen
-            populateComponents(null);
+photoInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (filesArray.length + files.length > 6) {
+        alert("You can only upload up to 6 images.");
+        return;
+    }
+    files.forEach(file => {
+        filesArray.push(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.classList.add('relative', 'w-24', 'h-24');
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-lg', 'shadow');
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = "×";
+            removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
+            removeBtn.addEventListener('click', () => { filesArray = filesArray.filter(f => f !== file); imgContainer.remove(); });
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(removeBtn);
+            imagePreview.insertBefore(imgContainer, imagePreview.firstChild);
+        };
+        reader.readAsDataURL(file);
+    });
+});
 
-            // Auto-fill project details
-            const proj = projects.find(p => String(p.id) === String(pid));
-            if (proj) {
-            projectNameField.value = proj.project_name || '';
-            customerField.value    = proj.customer_name || '';
-            // Your projects already include manager_name; no need to look up by manager_id
-            managerField.value     = proj.manager_name || '';
-            } else {
-            projectNameField.value = '';
-            customerField.value    = '';
-            managerField.value     = '';
-            }
-        });
+// --- Data from Flask ---
+const data = {
+    projects: {{ data.projects | tojson }},
+    groups: {{ data.groups | tojson }},
+    components: {{ data.components | tojson }},
+    managers: {{ data.managers | tojson }},
+    customers: {{ data.customers | tojson }},
+    reasons: {{ data.reasons | tojson }},
+    department: {{ data.department | tojson }},
+    action: {{ data.action | tojson }},
+    priority: {{ data.priority | tojson }}
+};
 
-        // --- Group change ---
-        groupSelect.addEventListener('change', () => {
-            const gid = groupSelect.value;
-            populateComponents(gid || null);
-        });
+const projectSelect = document.getElementById('project_select');
+const groupSelect = document.getElementById('group_select');
+const projectNameField = document.getElementById('project_name');
+const customerField = document.getElementById('customer');
+const managerField = document.getElementById('manager');
 
-        // Initial load: show all groups + all components
-        populateGroups();
-        populateComponents();
-    </script>
+function populateGroups(projectId = null) {
+    groupSelect.innerHTML = '<option value="">Select Group</option>';
+    const filtered = projectId ? data.groups.filter(g => String(g.project_id) === String(projectId)) : data.groups;
+    filtered.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.group_number ?? g.group_name ?? g.id;
+        groupSelect.appendChild(opt);
+    });
+}
+
+// Project change updates group and autofill details
+projectSelect.addEventListener('change', () => {
+    const pid = projectSelect.value;
+    populateGroups(pid || null);
+    document.querySelectorAll('.component-row').forEach(row => {
+        const compSelect = row.querySelector('.component_select');
+        populateComponentsForRow(compSelect, null);
+    });
+
+    const proj = data.projects.find(p => String(p.id) === String(pid));
+    projectNameField.value = proj?.project_name || '';
+    customerField.value = proj?.customer_name || '';
+    managerField.value = proj?.manager_name || '';
+});
+
+// Group change updates components for each row
+groupSelect.addEventListener('change', () => {
+    const gid = groupSelect.value;
+    document.querySelectorAll('.component-row').forEach(row => {
+        const compSelect = row.querySelector('.component_select');
+        populateComponentsForRow(compSelect, gid || null);
+    });
+});
+
+// Initial load
+populateGroups();
+document.querySelectorAll('.component-row').forEach(row => populateDropdowns(row));
+</script>
+
 
 
 {% endblock %}

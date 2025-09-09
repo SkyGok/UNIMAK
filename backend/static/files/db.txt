@@ -29,21 +29,6 @@ CREATE TABLE projects (
     FOREIGN KEY (manager_id) REFERENCES managers(id),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
-CREATE TABLE problems (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    project_id INTEGER NOT NULL,
-    group_id INTEGER NOT NULL,
-    df_number TEXT UNIQUE NOT NULL,       -- latest df report
-    recorder_id INTEGER NOT NULL,
-    reason TEXT NOT NULL,
-    description TEXT,
-    photos_id TEXT,
-    status TEXT DEFAULT 'waiting',        -- 11 different statuses possible
-    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES projects(id),
-    FOREIGN KEY (group_id) REFERENCES groups(id),
-    FOREIGN KEY (recorder_id) REFERENCES users(id)
-);
 CREATE TABLE problem_steps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     problem_id INTEGER NOT NULL,
@@ -52,39 +37,48 @@ CREATE TABLE problem_steps (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (problem_id) REFERENCES problems(id)
 );
-CREATE TABLE components (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    group_id INTEGER NOT NULL,
-    component_no TEXT NOT NULL,
-    component_name TEXT NOT NULL,
-    unit_quantity INTEGER NOT NULL,
-    total_quantity INTEGER NOT NULL,
-    weight FLOAT,
-    description TEXT,
-    size TEXT,
-    material TEXT NOT NULL,
-    machine_type TEXT NOT NULL,
-    notes TEXT,
-    working_area TEXT NOT NULL, position_no TEXT NOT NULL,
-    FOREIGN KEY (group_id) REFERENCES groups(id)
-);
 CREATE TABLE groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id INTEGER NOT NULL,
-    engineer_id INTEGER NOT NULL,
-    group_name TEXT NOT NULL,
-    group_number TEXT NOT NULL,
+    engineer_id INTEGER NOT NULL, group_name TEXT NOT NULL, group_number TEXT NOT NULL,
     FOREIGN KEY (project_id) REFERENCES projects(id),
-    FOREIGN KEY (engineer_id) REFERENCES engineers(id),
+    FOREIGN KEY (engineer_id) REFERENCES engineers(id)
 );
-
-sqlite> SELECT * FROM groups;
-1|1|1|ROTUS KABINI|25016_010000
-2|1|1|ROBOT+TOOL GRUBU|25016_020000
-3|1|1|HERDING ve HAVA KANALI GRUBU|25016_050000
-4|1|2|NOZUL-ENJEKTOR-VALF GRUBU|25016_140000
-
-
-
-INSERT INTO components WHERE group_id = 3 (position_no,component_no,component_name,unit_quantity,total_quantity,weight,description,size,material,machine_type,notes,working_area) VALUES
-()
+CREATE TABLE IF NOT EXISTS "components" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL,
+    position_no TEXT,
+    component_no TEXT,
+    component_name TEXT,
+    unit_quantity INTEGER,
+    total_quantity INTEGER,
+    weight FLOAT,
+    description TEXT,
+    size TEXT,
+    materials TEXT,         -- now nullable
+    machine_type TEXT,
+    notes TEXT,
+    working_area TEXT,
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);
+CREATE TABLE problem_components (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    problem_id INTEGER NOT NULL,
+    component_id INTEGER NOT NULL,
+    reason TEXT,
+    department TEXT,
+    action TEXT,
+    priority TEXT,
+    description TEXT,
+    FOREIGN KEY (problem_id) REFERENCES problems(id),
+    FOREIGN KEY (component_id) REFERENCES components(id)
+);
+CREATE TABLE IF NOT EXISTS "problems" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),                                                                                                                                                FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);

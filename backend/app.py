@@ -8,7 +8,7 @@ from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
 from flask import send_from_directory
 from flask import request, jsonify
-from dropdowns import trials, reasons, department, action, priority
+from dropdowns import reasons, department, action, priority
 import requests
 # ------------------------
 # Configure application
@@ -70,36 +70,39 @@ def after_request(response):
 def index():
     """Show latest project problem reports on main page"""
     rows = db.execute("""
-        SELECT pr.df_number, p.project_number, p.manager_id, m.manager_name,
-               pr.reason, pr.description, pr.photos_id, pr.record_date
+        SELECT pr.id AS problem_id,
+               p.project_number,
+               p.project_name,
+               m.manager_name,
+               pr.created_at AS record_date,
+               u.username AS record_opened_by,
+               g.group_name
         FROM problems pr
         JOIN projects p ON pr.project_id = p.id
         JOIN managers m ON p.manager_id = m.id
-        ORDER BY pr.record_date DESC
+        JOIN users u ON pr.user_id = u.id
+        JOIN groups g ON pr.group_id = g.id
+        ORDER BY pr.created_at DESC
     """)
-    reason_dict = {r["key"]: r["default"] for r in reasons}
 
-    # Build photo URLs
+    # Example: add placeholders for missing columns used in template
     for row in rows:
-        photos = []
-        if row["photos_id"]:  # if not null
-            filenames = row["photos_id"].split(",")
-            for filename in filenames:
-                photos.append(
-                    url_for("static", filename=f"files/uploads/{row['df_number']}/pictures/{filename.strip()}")
-                )
-        row["photo_urls"] = photos
-
-        # Map reason key to human-readable default
-        row["reason_display"] = reason_dict.get(row["reason"], row["reason"])
+        row["df_number"] = f"DF_{row['problem_id']}"  # generate a DF number
+        row["reason"] = "N/A"  # placeholder, you can link to problem_components later
+        row["description"] = "-"  # placeholder
+        row["photos_id"] = None  # no photos for now
+        row["photo_urls"] = []
+        row["status"] = "Pending"  # default
+        row["reason_display"] = row["reason"]
 
     t = get_translations()
-    return render_template("home.html", 
-                           data=rows, 
+    return render_template("home.html",
+                           data=rows,
                            t=t,
-                           reasons=reasons,
-                           priority=priority,
-                           action=action)
+                           reasons=[],  # define your reason options here
+                           priority=[],  # define your priority options
+                           action=[]  # define your action options
+                           )
 
 
 # -------------------- LOGIN --------------------
@@ -195,13 +198,27 @@ def upload():
         "customers": customers,
         "projects": projects,
         "groups": groups,
-        "components": components
+        "components": components,
     }
 
     if request.method == "POST":
         project_id = request.form.get("project_id")
         group_id = request.form.get("group_id")
         photos = request.files.getlist("photos")
+        component_ids = request.form.getlist("component_id[]")  # list of selected components
+        reasons = request.form.getlist("reason[]")
+        departments = request.form.getlist("department[]")
+        actions = request.form.getlist("action[]")
+        priorities = request.form.getlist("priority[]")
+        descriptions = request.form.getlist("description[]")
+
+        for i in range(len(component_ids)):
+            db.execute("""
+                INSERT INTO problem_components 
+                (problem_id, component_id, reason, department, action, priority, description)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, problem_id, component_ids[i], reasons[i], departments[i], actions[i], priorities[i], descriptions[i])
+
 
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
@@ -223,33 +240,42 @@ def upload():
                 photo.save(os.path.join(pictures_dir, filename))
                 photo_filenames.append(filename)
 
-        print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
+        # print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
 
+        # 1. Insert the main problem
         db.execute("""
-            INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, project_id, group_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
+            INSERT INTO problems (project_id, group_id, user_id)
+            VALUES (?, ?, ?)
+        """, project_id, group_id, session["user_id"])
 
-        problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
+        # Get the ID of the newly created problem
+        problem_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
+
+        # 2. Insert the detailed component info
+        db.execute("""
+            INSERT INTO problem_components 
+            (problem_id, component_id, reason, department, action, priority, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, problem_id, component_ids, reasons, department, action, priority, descriptions)
+
+        # 3. (Optional) If you still need problem_steps
         db.execute("""
             INSERT INTO problem_steps (problem_id, step_number, df_filename)
             VALUES (?, ?, ?)
         """, problem_id, 1, f"{df_number}.xlsx")
 
+
         flash("Problem reported successfully!", "success")
         return redirect("/")
 
     t = get_translations()
-    return render_template("upload.html", 
-                        reasons=reasons,
-                        priority=priority, 
-                        action=action, 
-                        department=department, 
-                        data=data, 
-                        trials=trials, 
-                        t=t, 
-                        managers=managers)
-
+    return render_template("admin.html",  
+                        data=data,
+                        reasons = reasons,
+                        priority = priority,
+                        department = department,
+                        action = action,
+                        t=t)
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])
@@ -350,102 +376,41 @@ def history():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    # Get all managers
-    managers = db.execute("SELECT id, manager_name, manager_mail FROM managers")
-
-    # Get all customers
-    customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
-
-    # Get all projects
-    projects = db.execute("""
-        SELECT p.id, p.project_number, p.project_name, p.quantity,
-               m.manager_name, c.customer_name
-        FROM projects p
+    """Show latest project problem reports on main page"""
+    rows = db.execute("""
+        SELECT pr.id AS problem_id,
+               p.project_number,
+               p.project_name,
+               m.manager_name,
+               pr.created_at AS record_date,
+               u.username AS record_opened_by,
+               g.group_name
+        FROM problems pr
+        JOIN projects p ON pr.project_id = p.id
         JOIN managers m ON p.manager_id = m.id
-        JOIN customers c ON p.customer_id = c.id
+        JOIN users u ON pr.user_id = u.id
+        JOIN groups g ON pr.group_id = g.id
+        ORDER BY pr.created_at DESC
     """)
 
-    # Get groups with engineer info (to allow problem linking)
-    groups = db.execute("""
-        SELECT g.id, g.project_id, e.engineer_name,
-            g.group_number, g.group_name
-        FROM groups g
-        JOIN engineers e ON g.engineer_id = e.id
-    """)
-
-
-    # Get components info (to allow problem linking)
-    components = db.execute("""
-        SELECT
-            c.id,
-            c.group_id,            -- needed for filtering
-            c.component_no,
-            c.component_name,
-            c.unit_quantity,
-            c.total_quantity
-        FROM components c;
-    """)
-
-
-    data = {
-        "managers": managers,
-        "customers": customers,
-        "projects": projects,
-        "groups": groups,
-        "components": components
-    }
-
-    if request.method == "POST":
-        project_id = request.form.get("project_id")
-        group_id = request.form.get("group_id")
-        photos = request.files.getlist("photos")
-
-        timestamp = datetime.now().strftime("%d%m%y%H%M%S")
-        df_number = f"df_{timestamp}"
-
-        components_data = []
-
-        
-
-        folder_name = df_number
-        # ✅ Corrected: no leading slash, path relative to project
-        base_dir = os.path.join(os.path.dirname(__file__), "static", "files", "uploads", folder_name)
-        pictures_dir = os.path.join(base_dir, "pictures")
-        os.makedirs(pictures_dir, exist_ok=True)
-
-        photo_filenames = []
-        for idx, photo in enumerate(photos, start=1):
-            if photo and photo.filename:
-                filename = secure_filename(f"{folder_name}_{idx}.jpg")
-                photo.save(os.path.join(pictures_dir, filename))
-                photo_filenames.append(filename)
-
-        print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
-
-        db.execute("""
-            INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, project_id, group_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
-
-        problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
-        db.execute("""
-            INSERT INTO problem_steps (problem_id, step_number, df_filename)
-            VALUES (?, ?, ?)
-        """, problem_id, 1, f"{df_number}.xlsx")
-
-        flash("Problem reported successfully!", "success")
-        return redirect("/")
+    # Example: add placeholders for missing columns used in template
+    for row in rows:
+        row["df_number"] = f"DF_{row['problem_id']}"  # generate a DF number
+        row["reason"] = "N/A"  # placeholder, you can link to problem_components later
+        row["description"] = "-"  # placeholder
+        row["photos_id"] = None  # no photos for now
+        row["photo_urls"] = []
+        row["status"] = "Pending"  # default
+        row["reason_display"] = row["reason"]
 
     t = get_translations()
-    return render_template("admin.html", 
-                        reasons=reasons,
-                        priority=priority, 
-                        action=action, 
-                        department=department, 
-                        data=data, 
-                        trials=trials, 
-                        t=t, 
-                        managers=managers)
+    return render_template("admin.html",
+                           data=rows,
+                           t=t,
+                           reasons=[],  # define your reason options here
+                           priority=[],  # define your priority options
+                           action=[]  # define your action options
+                           )
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":

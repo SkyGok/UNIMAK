@@ -1,299 +1,354 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Upload
+    Home
 {% endblock %}
 
 {% block main %}
-    <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6" data-translate="upload.title">Report a Project Issue</h1>
-        
-        <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
-            
-            <!-- Project Number -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700" data-translate="upload.project_number">Project Number</label>
-                <select name="project_id" id="project_select"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                    <option value="">Select Project</option>
-                    {% for p in data.projects %}
-                        <option value="{{ p.id }}">{{ p.project_number }}</option>
-                    {% endfor %}
-                </select>
-            </div>
 
-            <!-- Work Order -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700" data-translate="upload.work_order">Work Order</label>
-                <select name="group_id" id="group_select"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                    <option value="">Select Group</option>
-                </select>
-            </div>
+<!-- jQuery + Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-            <!-- Auto-filled details -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
-                    <input type="text" id="project_name" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-                <div>
-                    <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
-                    <input type="text" id="customer" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-                <div>
-                    <label for="manager" class="block mb-2 font-medium" data-translate="upload.manager">Manager</label>
-                    <input type="text" id="manager" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-            </div >
-
-            <!-- reporting problematic multipla components or problems  -->
-            <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-
-                    <!-- Component -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.component">Component</label>
-                    <select name="component_id" id="component_select"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        <option value="">Select Component</option>
-                    </select>
-                </div>
-
-                <!-- Problem classification -->
-                 <!-- Components Section -->
-        <div id="componentsContainer" class="space-y-6 mt-6">
-            <div class="component-row p-4 border rounded-lg shadow-sm bg-gray-50 relative">
-                <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700 remove-component">&times;</button>
-
-                <!-- Component -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.component">Component</label>
-                    <select name="components[0][component_id]" class="component_select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                        <option value="">Select Component</option>
-                    </select>
-                </div>
-
-                <!-- Problem classification -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
-                    <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.reason">Reason</label>
-                        <select name="components[0][reason]" class="w-full border rounded px-3 py-2">
-                            {% for r in reasons %}
-                                <option value="{{ r.key }}" data-translate="{{ r.key }}">{{ r.default }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.department">Department</label>
-                        <select name="components[0][department]" class="w-full border rounded px-3 py-2">
-                            {% for d in department %}
-                                <option value="{{ d.key }}" data-translate="{{ d.key }}">{{ d.default }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.action">Action</label>
-                        <select name="components[0][action]" class="w-full border rounded px-3 py-2">
-                            {% for a in action %}
-                                <option value="{{ a.key }}" data-translate="{{ a.key }}">{{ a.default }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.priority">Priority</label>
-                        <select name="components[0][priority]" class="w-full border rounded px-3 py-2">
-                            {% for p in priority %}
-                                <option value="{{ p.key }}" data-translate="{{ p.key }}">{{ p.default }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.description">Description</label>
-                    <textarea name="components[0][description]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
-                </div>
+<div class="p-6 bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800" data-translate="home.title">Problem Reports</h1>
+        <!-- Feature Selector -->
+        <div class="ml-auto">
+            <label for="featureSelect" class="mr-2 font-medium text-gray-700" data-translate="home.add_column">Add Column:</label>
+            <select id="featureSelect" class="px-2 py-1 border rounded shadow-sm text-sm">
+                <option value="" disabled selected data-translate="home.select_feature">Select a feature</option>
+                <option value="record_opened_by" data-translate="features.record_opened_by">Record Opened By</option>
+                <option value="record_date" data-translate="features.record_date">Record Date</option>
+                <option value="order_no" data-translate="features.order_no">Order No</option>
+                <option value="group_name" data-translate="features.group_name">Group Name</option>
+                <option value="part_no" data-translate="features.part_no">Part No</option>
+                <option value="link_stock_code" data-translate="features.link_stock_code">Stock Code</option>
+                <option value="link_stock_name" data-translate="features.link_stock_name">Stock Name</option>
+                <option value="part_name" data-translate="features.part_name">Part Name</option>
+                <option value="quantity" data-translate="features.quantity">Quantity</option>
+                <option value="unit" data-translate="features.unit">Unit</option>
+                <option value="requester" data-translate="features.requester">Requester</option>
+                <option value="nonconformity_description" data-translate="features.nonconformity_description">Nonconformity Description</option>
+                <option value="nonconformity_type" data-translate="features.nonconformity_type">Nonconformity Type</option>
+                <option value="responsible_departmen" data-translate="features.responsible_departmen">Responsible Department</option>
+                <option value="action" data-translate="features.action">Action</option>
+                <option value="priority" data-translate="features.priority">Priority</option>
+                <option value="bom_description" data-translate="features.bom_description">BOM Description</option>
+                <option value="status" data-translate="features.status">Status</option>
+                <option value="planned_closure_date" data-translate="features.planned_closure_date">Planned Closure Date</option>
+                <option value="approval_check" data-translate="features.approval_check">Approval Check</option>
+                <option value="approver" data-translate="features.approver">Approver</option>
+                <option value="approval_date" data-translate="features.approval_date">Approval Date</option>
+                <option value="post_record_action" data-translate="features.post_record_action">Post Record Action</option>
+            </select>
+            <div class="mt-2 flex space-x-2 justify-center items-center">
+                <button id="selectAll" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Select All</button>
+                <button id="deselectAll" class="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Deselect All</button>
             </div>
         </div>
-
-        <!-- Add Component Button -->
-        <div class="flex justify-end pt-3">
-            <button type="button" id="addComponentBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700">Add Component</button>
-        </div>
-            
-            <!-- Image Upload -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="upload.upload_photos">Upload Photos (max 6)</label>
-                    <div id="imagePreview" class="flex flex-wrap gap-4">
-                        <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <span class="text-3xl text-gray-400">+</span>
-                            <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
-                        </label>
-                    </div>
-                </div>
-            
-            
-            <!-- Submit -->
-            <div class="flex justify-end">
-                <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none"
-                        data-translate="upload.submit">
-                    Submit Report
-                </button>
-            </div>
-        </form>
     </div>
 
-    <script>
-        let componentIndex = 1;
+    <!-- Table Container -->
+    <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+        <table id="problemTable" class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.df_number">DF Number</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.project">Project</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.manager">Manager</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.reason">Reason</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.status">Status</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                
+                {% for p in data %}
+                <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="openDetails('{{ p.df_number }}')">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ p.df_number }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.project_number }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ p.manager_name }}</td>
+                    <td class="px-6 py-4 text-red-500 font-semibold" data-translate="{{ p.reason }}">
+                        {{ p.reason_display }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if p.status == "Completed" %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-green-100 text-green-800" data-translate="status.completed">Completed</span>
+                        {% elif p.status == "Pending" %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-yellow-100 text-yellow-800" data-translate="status.pending">Pending</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-lg text-xs bg-red-100 text-red-800" data-translate="status.issue">Issue</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-600 hover:underline" data-translate="table.view">View</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-        // --- Dynamic Components ---
-        document.getElementById('addComponentBtn').addEventListener('click', () => {
-            const container = document.getElementById('componentsContainer');
-            const firstRow = container.querySelector('.component-row');
-            const clone = firstRow.cloneNode(true);
 
-            clone.querySelectorAll('select, textarea').forEach(el => {
-                el.name = el.name.replace(/\d+/, componentIndex);
-                if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                else if (el.tagName === 'TEXTAREA') el.value = '';
-            });
+        
+    </div>
 
-            clone.querySelector('.remove-component').addEventListener('click', () => clone.remove());
+    <!-- Sidebar (Hidden by default, opens on row click) -->
+    <div id="detailsPanel" class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-6 hidden overflow-y-auto">
+        <button onclick="closeDetails()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">✖</button>
+        <h2 class="text-xl font-bold mb-4" data-translate="sidebar.title">Problem Report Details</h2>
+        <div id="detailsContent">
+            <p class="text-gray-600" data-translate="sidebar.placeholder">Select a report to view details...</p>
+        </div>
+    </div>
 
-            container.appendChild(clone);
-            componentIndex++;
-        });
 
-        // Remove initial row button
-        document.querySelectorAll('.remove-component').forEach(btn => {
-            btn.addEventListener('click', () => btn.closest('.component-row').remove());
-        });
+    <!-- Chatbox Button -->
+    <button id="chatboxBtn" class="fixed bottom-6 right-6 p-4 bg-orange-600 text-white rounded-full shadow-lg">
+    💬
+    </button>
 
-    // --- Image preview ---
-    const photoInput = document.getElementById('photoInput');
-    const imagePreview = document.getElementById('imagePreview');
-    let filesArray = [];
+    <!-- Chatbox Modal -->
+    <div id="chatbox" class="fixed bottom-0 right-0 w-80 bg-white shadow-lg rounded-t-lg p-4 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">DF Problem Summary</h3>
+        <button id="closeChat" class="text-gray-500">✖</button>
+    </div>
+    <div id="chatContent" class="mb-4">
+        <p class="text-gray-600">Select a report to view details...</p>
+    </div>
+    <textarea id="userInput" class="w-full p-2 border rounded mb-4" placeholder="Ask something..." rows="3"></textarea>
+    <button id="sendMessage" class="w-full p-2 bg-blue-600 text-white rounded">Send</button>
+    </div>
 
-    photoInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        if (filesArray.length + files.length > 6) {
-            alert("You can only upload up to 6 images.");
+    <!-- Photo Lightbox Modal -->
+    <div id="photoLightbox" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <button id="closeLightbox" class="absolute top-4 right-4 text-white text-3xl font-bold">✖</button>
+        <div class="relative w-full max-w-5xl h-4/5 flex items-center justify-center">
+            <button id="prevPhoto" class="absolute left-0 text-white text-4xl px-4 cursor-pointer">❮</button>
+            <img id="lightboxImg" src="" class="max-h-full max-w-full object-contain rounded-lg shadow-lg">
+            <button id="nextPhoto" class="absolute right-0 text-white text-4xl px-4 cursor-pointer">❯</button>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    const problemData = {{ data | tojson }};
+</script>
+
+
+<script>
+    const featureSelect = document.getElementById("featureSelect");
+    const table = document.getElementById("problemTable");
+
+    // Example extra data for demonstration
+    const extraData = {
+        record_opened_by :          ["to be filled"],
+        record_date:                ["to be filled"],
+        order_no:                   ["to be filled"],
+        group_name:                 ["to be filled"],
+        part_no:                    ["to be filled"],
+        link_stock_code:            ["to be filled"],
+        link_stock_name:            ["to be filled"],
+        part_name:                  ["to be filled"],
+        quantity:                   ["to be filled"],
+        unit:                       ["to be filled"],
+        requester:                  ["to be filled"],
+        nonconformity_description:  ["to be filled"],
+        nonconformity_type:         ["to be filled"],
+        responsible_departmen:      ["to be filled"],
+        action:                     ["to be filled"],
+        priority:                   ["to be filled"],
+        bom_description:            ["to be filled"],
+        status:                     ["to be filled"],
+        planned_closure_date:       ["to be filled"],
+        approval_check:             ["to be filled"],
+        approver:                   ["to be filled"],
+        approval_date:              ["to be filled"],
+        post_record_action:         ["to be filled"]
+        
+    };
+
+    featureSelect.addEventListener("change", () => {
+        const feature = featureSelect.value;
+        const headers = Array.from(table.querySelectorAll("thead th")).map(h => h.dataset.translate || h.innerText.toLowerCase());
+        if (headers.includes(feature)) {
+            alert("This feature is already added!");
             return;
         }
-        files.forEach(file => {
-            filesArray.push(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imgContainer = document.createElement('div');
-                imgContainer.classList.add('relative', 'w-24', 'h-24');
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-lg', 'shadow');
-                const removeBtn = document.createElement('button');
-                removeBtn.innerHTML = "×";
-                removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
-                removeBtn.addEventListener('click', () => {
-                    filesArray = filesArray.filter(f => f !== file);
-                    imgContainer.remove();
-                });
-                imgContainer.appendChild(img);
-                imgContainer.appendChild(removeBtn);
-                imagePreview.insertBefore(imgContainer, imagePreview.firstChild);
-            };
-            reader.readAsDataURL(file);
+
+        // Add column header
+        const headerRow = table.querySelector("thead tr");
+        const newTh = document.createElement("th");
+        newTh.innerText = feature.charAt(0).toUpperCase() + feature.slice(1);
+        newTh.classList.add("px-6","py-3","text-left","font-semibold","text-gray-600","uppercase","tracking-wider");
+        newTh.dataset.translate = `features.${feature}`;
+        headerRow.appendChild(newTh);
+
+        // Add column cells to each row
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach((row, i) => {
+            const newTd = document.createElement("td");
+            newTd.classList.add("px-6","py-4");
+            newTd.innerText = extraData[feature][i] || "-";
+            row.appendChild(newTd);
         });
     });
 
-        // --- Data from Flask ---
-        const projects   = {{ data.projects   | tojson }};
-        const groups     = {{ data.groups     | tojson }};
-        const components = {{ data.components | tojson }};
-        const managers   = {{ data.managers   | tojson }};
-        const customers  = {{ data.customers  | tojson }};
+    function openDetails(df_number) {
+        const detailsPanel = document.getElementById("detailsPanel");
+        const detailsContent = document.getElementById("detailsContent");
 
-        // --- DOM Elements ---
-        const projectSelect   = document.getElementById('project_select');
-        const groupSelect     = document.getElementById('group_select');
-        const componentSelect = document.getElementById('component_select');
+        const problem = problemData.find(p => p.df_number === df_number);
+        if (!problem) return;
 
-        const projectNameField = document.getElementById('project_name');
-        const customerField    = document.getElementById('customer');
-        const managerField     = document.getElementById('manager');
+        let html = `
+            <p><strong data-translate="sidebar.df_number">DF Number:</strong> ${problem.df_number}</p>
+            <p><strong data-translate="sidebar.project">Project:</strong> ${problem.project_number}</p>
+            <p><strong data-translate="sidebar.manager">Manager:</strong> ${problem.manager_name}</p>
+            <p><strong data-translate="sidebar.reason">Reason:</strong> ${problem.reason}</p>
+            <p><strong data-translate="sidebar.description">Description:</strong></p>
+            <p>${problem.description || "-"}</p>
+            <p><strong data-translate="sidebar.photos">Photos:</strong></p>
+            <div class="flex flex-wrap gap-2 mt-2">
+        `;
 
-        // Populate GROUPS. If a project is selected, match via project_number. Otherwise, show all.
-        function populateGroups(projectId = null) {
-            groupSelect.innerHTML = '<option value="">Select Group</option>';
+        const photos = problem.photo_urls || [];
 
-            let filtered = groups;
-            if (projectId) {
-            const proj = projects.find(p => String(p.id) === String(projectId));
-            if (proj) {
-                filtered = groups.filter(g => String(g.project_id) === String(projectId));
-            }
-            }
-
-            filtered.forEach(g => {
-            const opt = document.createElement('option');
-            // Adjust display label if needed:
-            opt.textContent = g.group_number ?? g.group_name ?? g.id; 
-            opt.value = g.id;
-            groupSelect.appendChild(opt);
+        if (photos.length === 0) {
+            html += `<p class="text-gray-500">No photos available</p>`;
+        } else {
+            photos.forEach((photo, idx) => {
+                html += `<img src="${photo}" class="w-24 h-24 object-cover rounded shadow cursor-pointer" 
+                        onclick="openLightbox([${photos.map(p => `'${p}'`).join(',')}], ${idx})" />`;
             });
         }
 
-        // Populate COMPONENTS. If a group is selected, filter by group_id. Otherwise, show all.
-        function populateComponents(groupId = null) {
-            componentSelect.innerHTML = '<option value="">Select Component</option>';
+        html += `</div>`;
+        detailsContent.innerHTML = html;
+        detailsPanel.classList.remove("hidden");
+    }
 
-            const filtered = groupId
-            ? components.filter(c => String(c.group_id) === String(groupId))
-            : components;
 
-            filtered.forEach(c => {
-            const opt = document.createElement('option');
-            // Adjust display label if needed:
-            opt.textContent = c.component_no ?? c.component_name ?? c.id;
-            opt.value = c.id;
-            componentSelect.appendChild(opt);
-            });
+
+
+
+    function closeDetails() {
+        document.getElementById("detailsPanel").classList.add("hidden");
+    }
+
+    document.getElementById("llmChatHeader").addEventListener("click", () => {
+        const content = document.getElementById("llmChatContent");
+        const inputArea = document.getElementById("llmChatInput").parentElement;
+        const chatBox = document.getElementById("llmChatBox");
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            inputArea.style.display = "flex";
+            chatBox.style.height = "400px";
+        } else {
+            content.style.display = "none";
+            inputArea.style.display = "none";
+            chatBox.style.height = "40px";
         }
+    });
 
-        // --- Project change ---
-        projectSelect.addEventListener('change', () => {
-            const pid = projectSelect.value;
+    document.getElementById("llmChatSend").addEventListener("click", async () => {
+        const input = document.getElementById("llmChatInput");
+        const msg = input.value.trim();
+        if (!msg) return;
 
-            // Filter groups by project
-            populateGroups(pid || null);
+        const chatContent = document.getElementById("llmChatContent");
+        chatContent.innerHTML += `<p><strong>You:</strong> ${msg}</p>`;
+        input.value = "";
 
-            // Reset components until a group is chosen
-            populateComponents(null);
-
-            // Auto-fill project details
-            const proj = projects.find(p => String(p.id) === String(pid));
-            if (proj) {
-            projectNameField.value = proj.project_name || '';
-            customerField.value    = proj.customer_name || '';
-            // Your projects already include manager_name; no need to look up by manager_id
-            managerField.value     = proj.manager_name || '';
-            } else {
-            projectNameField.value = '';
-            customerField.value    = '';
-            managerField.value     = '';
-            }
+        // Send to Flask
+        const response = await fetch("/llm_summary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: msg })
         });
 
-        // --- Group change ---
-        groupSelect.addEventListener('change', () => {
-            const gid = groupSelect.value;
-            populateComponents(gid || null);
-        });
+        const data = await response.json();
+        chatContent.innerHTML += `<p><strong>LLM:</strong> ${data.answer}</p>`;
+        chatContent.scrollTop = chatContent.scrollHeight;
+    });
+</script>
 
-        // Initial load: show all groups + all components
-        populateGroups();
-        populateComponents();
-    </script>
+<script>
+  const chatboxBtn = document.getElementById("chatboxBtn");
+  const chatbox = document.getElementById("chatbox");
+  const closeChat = document.getElementById("closeChat");
+  const sendMessage = document.getElementById("sendMessage");
+  const userInput = document.getElementById("userInput");
+  const chatContent = document.getElementById("chatContent");
 
+  // Toggle chatbox visibility
+  chatboxBtn.addEventListener("click", () => {
+    chatbox.classList.toggle("hidden");
+  });
+
+  closeChat.addEventListener("click", () => {
+    chatbox.classList.add("hidden");
+  });
+
+  // Handle message sending
+  sendMessage.addEventListener("click", async () => {
+    const query = userInput.value.trim();
+    if (query) {
+      const response = await fetch("/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+      });
+      const data = await response.json();
+      chatContent.innerHTML = `<p class="text-gray-600">${data.summary}</p>`;
+      userInput.value = "";
+    }
+  });
+
+  let currentPhotos = [];
+let currentIndex = 0;
+
+function openLightbox(photos, startIndex=0) {
+    currentPhotos = photos;
+    currentIndex = startIndex;
+
+    const lightbox = document.getElementById("photoLightbox");
+    const img = document.getElementById("lightboxImg");
+
+    img.src = currentPhotos[currentIndex];
+    lightbox.classList.remove("hidden");
+}
+
+function closeLightbox() {
+    document.getElementById("photoLightbox").classList.add("hidden");
+}
+
+// Navigate photos
+function nextPhoto() {
+    if (currentPhotos.length === 0) return;
+    currentIndex = (currentIndex + 1) % currentPhotos.length;
+    document.getElementById("lightboxImg").src = currentPhotos[currentIndex];
+}
+
+function prevPhoto() {
+    if (currentPhotos.length === 0) return;
+    currentIndex = (currentIndex - 1 + currentPhotos.length) % currentPhotos.length;
+    document.getElementById("lightboxImg").src = currentPhotos[currentIndex];
+}
+
+// Event listeners
+document.getElementById("closeLightbox").addEventListener("click", closeLightbox);
+document.getElementById("nextPhoto").addEventListener("click", nextPhoto);
+document.getElementById("prevPhoto").addEventListener("click", prevPhoto);
+
+
+  
+</script>
 
 {% endblock %}
