@@ -77,6 +77,7 @@ def index():
         JOIN managers m ON p.manager_id = m.id
         ORDER BY pr.record_date DESC
     """)
+    reason_dict = {r["key"]: r["default"] for r in reasons}
 
     # Build photo URLs
     for row in rows:
@@ -88,8 +89,18 @@ def index():
                     url_for("static", filename=f"files/uploads/{row['df_number']}/pictures/{filename.strip()}")
                 )
         row["photo_urls"] = photos
+
+        # Map reason key to human-readable default
+        row["reason_display"] = reason_dict.get(row["reason"], row["reason"])
+
     t = get_translations()
-    return render_template("home.html", data=rows, t=t)
+    return render_template("home.html", 
+                           data=rows, 
+                           t=t,
+                           reasons=reasons,
+                           priority=priority,
+                           action=action)
+
 
 # -------------------- LOGIN --------------------
 @app.route("/login", methods=["GET", "POST"])
@@ -190,12 +201,14 @@ def upload():
     if request.method == "POST":
         project_id = request.form.get("project_id")
         group_id = request.form.get("group_id")
-        reason = request.form.get("reason")
-        description = request.form.get("description")
         photos = request.files.getlist("photos")
 
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
+
+        components_data = []
+
+        
 
         folder_name = df_number
         # ✅ Corrected: no leading slash, path relative to project
@@ -337,9 +350,102 @@ def history():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    image = url_for('static', filename = 'files/uploads/df_050925090430/pictures/df_050925090430_1.jpg')
+    # Get all managers
+    managers = db.execute("SELECT id, manager_name, manager_mail FROM managers")
+
+    # Get all customers
+    customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
+
+    # Get all projects
+    projects = db.execute("""
+        SELECT p.id, p.project_number, p.project_name, p.quantity,
+               m.manager_name, c.customer_name
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+        JOIN customers c ON p.customer_id = c.id
+    """)
+
+    # Get groups with engineer info (to allow problem linking)
+    groups = db.execute("""
+        SELECT g.id, g.project_id, e.engineer_name,
+            g.group_number, g.group_name
+        FROM groups g
+        JOIN engineers e ON g.engineer_id = e.id
+    """)
+
+
+    # Get components info (to allow problem linking)
+    components = db.execute("""
+        SELECT
+            c.id,
+            c.group_id,            -- needed for filtering
+            c.component_no,
+            c.component_name,
+            c.unit_quantity,
+            c.total_quantity
+        FROM components c;
+    """)
+
+
+    data = {
+        "managers": managers,
+        "customers": customers,
+        "projects": projects,
+        "groups": groups,
+        "components": components
+    }
+
+    if request.method == "POST":
+        project_id = request.form.get("project_id")
+        group_id = request.form.get("group_id")
+        photos = request.files.getlist("photos")
+
+        timestamp = datetime.now().strftime("%d%m%y%H%M%S")
+        df_number = f"df_{timestamp}"
+
+        components_data = []
+
+        
+
+        folder_name = df_number
+        # ✅ Corrected: no leading slash, path relative to project
+        base_dir = os.path.join(os.path.dirname(__file__), "static", "files", "uploads", folder_name)
+        pictures_dir = os.path.join(base_dir, "pictures")
+        os.makedirs(pictures_dir, exist_ok=True)
+
+        photo_filenames = []
+        for idx, photo in enumerate(photos, start=1):
+            if photo and photo.filename:
+                filename = secure_filename(f"{folder_name}_{idx}.jpg")
+                photo.save(os.path.join(pictures_dir, filename))
+                photo_filenames.append(filename)
+
+        print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
+
+        db.execute("""
+            INSERT INTO problems (project_id, group_id, df_number, recorder_id, reason, description, photos_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, project_id, group_id, df_number, session["user_id"], reason, description, ",".join(photo_filenames))
+
+        problem_id = db.execute("SELECT id FROM problems WHERE df_number = ?", df_number)[0]["id"]
+        db.execute("""
+            INSERT INTO problem_steps (problem_id, step_number, df_filename)
+            VALUES (?, ?, ?)
+        """, problem_id, 1, f"{df_number}.xlsx")
+
+        flash("Problem reported successfully!", "success")
+        return redirect("/")
+
     t = get_translations()
-    return render_template("admin.html", t=t, pic = image)
+    return render_template("admin.html", 
+                        reasons=reasons,
+                        priority=priority, 
+                        action=action, 
+                        department=department, 
+                        data=data, 
+                        trials=trials, 
+                        t=t, 
+                        managers=managers)
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":

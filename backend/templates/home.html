@@ -5,6 +5,11 @@
 {% endblock %}
 
 {% block main %}
+
+<!-- jQuery + Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <div class="p-6 bg-gray-50 min-h-screen">
     <!-- Header Section -->
     <div class="flex items-center justify-between mb-6">
@@ -14,11 +19,34 @@
             <label for="featureSelect" class="mr-2 font-medium text-gray-700" data-translate="home.add_column">Add Column:</label>
             <select id="featureSelect" class="px-2 py-1 border rounded shadow-sm text-sm">
                 <option value="" disabled selected data-translate="home.select_feature">Select a feature</option>
+                <option value="record_opened_by" data-translate="features.record_opened_by">Record Opened By</option>
+                <option value="record_date" data-translate="features.record_date">Record Date</option>
+                <option value="order_no" data-translate="features.order_no">Order No</option>
+                <option value="group_name" data-translate="features.group_name">Group Name</option>
+                <option value="part_no" data-translate="features.part_no">Part No</option>
+                <option value="link_stock_code" data-translate="features.link_stock_code">Stock Code</option>
+                <option value="link_stock_name" data-translate="features.link_stock_name">Stock Name</option>
+                <option value="part_name" data-translate="features.part_name">Part Name</option>
+                <option value="quantity" data-translate="features.quantity">Quantity</option>
+                <option value="unit" data-translate="features.unit">Unit</option>
+                <option value="requester" data-translate="features.requester">Requester</option>
+                <option value="nonconformity_description" data-translate="features.nonconformity_description">Nonconformity Description</option>
+                <option value="nonconformity_type" data-translate="features.nonconformity_type">Nonconformity Type</option>
+                <option value="responsible_departmen" data-translate="features.responsible_departmen">Responsible Department</option>
+                <option value="action" data-translate="features.action">Action</option>
                 <option value="priority" data-translate="features.priority">Priority</option>
-                <option value="created_at" data-translate="features.created_at">Created At</option>
-                <option value="assigned_to" data-translate="features.assigned_to">Assigned To</option>
-                <option value="severity" data-translate="features.severity">Severity</option>
+                <option value="bom_description" data-translate="features.bom_description">BOM Description</option>
+                <option value="status" data-translate="features.status">Status</option>
+                <option value="planned_closure_date" data-translate="features.planned_closure_date">Planned Closure Date</option>
+                <option value="approval_check" data-translate="features.approval_check">Approval Check</option>
+                <option value="approver" data-translate="features.approver">Approver</option>
+                <option value="approval_date" data-translate="features.approval_date">Approval Date</option>
+                <option value="post_record_action" data-translate="features.post_record_action">Post Record Action</option>
             </select>
+            <div class="mt-2 flex space-x-2 justify-center items-center">
+                <button id="selectAll" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Select All</button>
+                <button id="deselectAll" class="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Deselect All</button>
+            </div>
         </div>
     </div>
 
@@ -36,12 +64,15 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
+                
                 {% for p in data %}
                 <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="openDetails('{{ p.df_number }}')">
                     <td class="px-6 py-4 font-medium text-gray-900">{{ p.df_number }}</td>
                     <td class="px-6 py-4 text-gray-700">{{ p.project_number }}</td>
                     <td class="px-6 py-4 text-gray-700">{{ p.manager_name }}</td>
-                    <td class="px-6 py-4 text-red-500 font-semibold">{{ p.reason }}</td>
+                    <td class="px-6 py-4 text-red-500 font-semibold" data-translate="{{ p.reason }}">
+                        {{ p.reason_display }}
+                    </td>
                     <td class="px-6 py-4">
                         {% if p.status == "Completed" %}
                             <span class="px-2 py-1 rounded-lg text-xs bg-green-100 text-green-800" data-translate="status.completed">Completed</span>
@@ -115,10 +146,30 @@
 
     // Example extra data for demonstration
     const extraData = {
-        priority: ["High", "Medium", "Low", "High", "Medium"],
-        created_at: ["2025-08-22", "2025-08-21", "2025-08-20", "2025-08-19", "2025-08-18"],
-        assigned_to: ["Alice", "Bob", "Charlie", "Diana", "Eve"],
-        severity: ["Critical", "Moderate", "Low", "Critical", "Moderate"]
+        record_opened_by :          ["to be filled"],
+        record_date:                ["to be filled"],
+        order_no:                   ["to be filled"],
+        group_name:                 ["to be filled"],
+        part_no:                    ["to be filled"],
+        link_stock_code:            ["to be filled"],
+        link_stock_name:            ["to be filled"],
+        part_name:                  ["to be filled"],
+        quantity:                   ["to be filled"],
+        unit:                       ["to be filled"],
+        requester:                  ["to be filled"],
+        nonconformity_description:  ["to be filled"],
+        nonconformity_type:         ["to be filled"],
+        responsible_departmen:      ["to be filled"],
+        action:                     ["to be filled"],
+        priority:                   ["to be filled"],
+        bom_description:            ["to be filled"],
+        status:                     ["to be filled"],
+        planned_closure_date:       ["to be filled"],
+        approval_check:             ["to be filled"],
+        approver:                   ["to be filled"],
+        approval_date:              ["to be filled"],
+        post_record_action:         ["to be filled"]
+        
     };
 
     featureSelect.addEventListener("change", () => {
