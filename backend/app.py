@@ -10,6 +10,7 @@ from flask import send_from_directory
 from flask import request, jsonify
 from dropdowns import reasons, department, action, priority
 import requests
+from collections import defaultdict
 # ------------------------
 # Configure application
 # ------------------------
@@ -376,41 +377,77 @@ def history():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    """Show latest project problem reports on main page"""
-    rows = db.execute("""
-        SELECT pr.id AS problem_id,
-               p.project_number,
-               p.project_name,
-               m.manager_name,
-               pr.created_at AS record_date,
-               u.username AS record_opened_by,
-               g.group_name
-        FROM problems pr
-        JOIN projects p ON pr.project_id = p.id
-        JOIN managers m ON p.manager_id = m.id
-        JOIN users u ON pr.user_id = u.id
-        JOIN groups g ON pr.group_id = g.id
-        ORDER BY pr.created_at DESC
+    problems = db.execute("""
+        SELECT 
+            p.id AS problem_id,
+            p.created_at,
+            pj.project_number,
+            pj.project_name,
+            m.manager_name,
+            c.customer_name,
+            g.group_name,
+            g.group_number,
+            e.engineer_name,
+            pc.id AS pc_id,
+            comp.component_name,
+            comp.component_no,
+            pc.reason,
+            pc.description,
+            pc.priority,
+            pc.action,
+            pc.department,
+            ps.df_filename
+        FROM problems p
+        JOIN projects pj ON pj.id = p.project_id
+        JOIN managers m ON pj.manager_id = m.id
+        JOIN customers c ON pj.customer_id = c.id
+        JOIN groups g ON g.id = p.group_id
+        JOIN engineers e ON g.engineer_id = e.id
+        LEFT JOIN problem_components pc ON pc.problem_id = p.id
+        LEFT JOIN components comp ON comp.id = pc.component_id
+        LEFT JOIN problem_steps ps ON ps.problem_id = p.id
+        ORDER BY p.created_at DESC
     """)
 
-    # Example: add placeholders for missing columns used in template
-    for row in rows:
-        row["df_number"] = f"DF_{row['problem_id']}"  # generate a DF number
-        row["reason"] = "N/A"  # placeholder, you can link to problem_components later
-        row["description"] = "-"  # placeholder
-        row["photos_id"] = None  # no photos for now
-        row["photo_urls"] = []
-        row["status"] = "Pending"  # default
-        row["reason_display"] = row["reason"]
+    problem_dict = defaultdict(lambda: {"components": [], "photos": []})
 
-    t = get_translations()
-    return render_template("admin.html",
-                           data=rows,
-                           t=t,
-                           reasons=[],  # define your reason options here
-                           priority=[],  # define your priority options
-                           action=[]  # define your action options
-                           )
+    for row in problems:
+        prob = problem_dict[row["problem_id"]]
+        prob.update({
+            "problem_id": row["problem_id"],
+            "created_at": row["created_at"],
+            "project_number": row["project_number"],
+            "project_name": row["project_name"],
+            "manager_name": row["manager_name"],
+            "customer_name": row["customer_name"],
+            "group_name": row["group_name"],
+            "group_number": row["group_number"],
+            "engineer_name": row["engineer_name"],
+            "df_filename": row["df_filename"]
+        })
+        if row["pc_id"]:
+            prob["components"].append({
+                "component_name": row["component_name"],
+                "component_no": row["component_no"],
+                "reason": row["reason"],
+                "description": row["description"],
+                "priority": row["priority"],
+                "action": row["action"],
+                "department": row["department"]
+            })
+
+    # Attach photos from filesystem
+    base_path = os.path.join(app.root_path, "static/files/uploads")
+    for prob in problem_dict.values():
+        df_prefix = prob["df_filename"].split(".")[0] if prob["df_filename"] else None
+        if df_prefix:
+            pictures_dir = os.path.join(base_path, df_prefix, "pictures")
+            if os.path.exists(pictures_dir):
+                prob["photos"] = os.listdir(pictures_dir)
+
+    data = list(problem_dict.values())
+    return render_template("admin.html", data=data)
+
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":
