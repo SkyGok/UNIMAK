@@ -1,3 +1,4 @@
+sqlite> .schema
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -29,14 +30,6 @@ CREATE TABLE projects (
     FOREIGN KEY (manager_id) REFERENCES managers(id),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
-CREATE TABLE problem_steps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    problem_id INTEGER NOT NULL,
-    step_number INTEGER NOT NULL,
-    df_filename TEXT NOT NULL,           -- e.g., df_1.xlsx, df_2.xlsx
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (problem_id) REFERENCES problems(id)
-);
 CREATE TABLE groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id INTEGER NOT NULL,
@@ -61,10 +54,21 @@ CREATE TABLE IF NOT EXISTS "components" (
     working_area TEXT,
     FOREIGN KEY (group_id) REFERENCES groups(id)
 );
+CREATE TABLE problems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,             -- who reported the problem
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    planned_closing_date DATE NOT NULL,   -- planned closing date for the whole problem
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);
 CREATE TABLE problem_components (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    problem_id INTEGER NOT NULL,
-    component_id INTEGER NOT NULL,
+    problem_id INTEGER NOT NULL,          -- link to problem
+    component_id INTEGER NOT NULL,        -- link to the actual component
     reason TEXT,
     department TEXT,
     action TEXT,
@@ -73,12 +77,18 @@ CREATE TABLE problem_components (
     FOREIGN KEY (problem_id) REFERENCES problems(id),
     FOREIGN KEY (component_id) REFERENCES components(id)
 );
-CREATE TABLE IF NOT EXISTS "problems" (
+CREATE TABLE problem_steps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    project_id INTEGER NOT NULL,
-    group_id INTEGER NOT NULL,
+    problem_id INTEGER NOT NULL,
+    component_id INTEGER NOT NULL,
+    step_number INTEGER NOT NULL,
+    df_filename TEXT NOT NULL,           -- e.g., df_1.xlsx
+    quantity INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    status TEXT NOT NULL,                 -- Pending, Completed, Issue
+    planned_closing_date DATE NOT NULL,
+    action_after_report TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id),                                                                                                                                                FOREIGN KEY (project_id) REFERENCES projects(id),
-    FOREIGN KEY (group_id) REFERENCES groups(id)
+    FOREIGN KEY (problem_id) REFERENCES problems(id),
+    FOREIGN KEY (component_id) REFERENCES components(id)
 );

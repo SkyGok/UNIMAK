@@ -1,137 +1,40 @@
-<div class="items-end flex justify-end">
-  <div class="flex flex-col items-end justify-end">
-    <div class="mt-2" >
-    <select id="featureSelect" class="ml-auto rounded border px-3 py-1 text-sm shadow-sm">
-      <option value="" disabled selected data-translate="home.add_column">Add Column:</option>
-      <option value="record_opened_by" data-translate="features.record_opened_by">Record Opened By</option>
-      <option value="record_date" data-translate="features.record_date">Record Date</option>
-      <option value="order_no" data-translate="features.order_no">Order No</option>
-      <option value="group_name" data-translate="features.group_name">Group Name</option>
-      <option value="part_no" data-translate="features.part_no">Part No</option>
-      <option value="link_stock_code" data-translate="features.link_stock_code">Stock Code</option>
-      <option value="link_stock_name" data-translate="features.link_stock_name">Stock Name</option>
-      <option value="part_name" data-translate="features.part_name">Part Name</option>
-      <option value="quantity" data-translate="features.quantity">Quantity</option>
-      <option value="unit" data-translate="features.unit">Unit</option>
-      <option value="requester" data-translate="features.requester">Requester</option>
-      <option value="nonconformity_description" data-translate="features.nonconformity_description">Nonconformity Description</option>
-      <option value="nonconformity_type" data-translate="features.nonconformity_type">Nonconformity Type</option>
-      <option value="responsible_departmen" data-translate="features.responsible_departmen">Responsible Department</option>
-      <option value="action" data-translate="features.action">Action</option>
-      <option value="priority" data-translate="features.priority">Priority</option>
-      <option value="bom_description" data-translate="features.bom_description">BOM Description</option>
-      <option value="status" data-translate="features.status">Status</option>
-      <option value="planned_closure_date" data-translate="features.planned_closure_date">Planned Closure Date</option>
-      <option value="approval_check" data-translate="features.approval_check">Approval Check</option>
-      <option value="approver" data-translate="features.approver">Approver</option>
-      <option value="approval_date" data-translate="features.approval_date">Approval Date</option>
-      <option value="post_record_action" data-translate="features.post_record_action">Post Record Action</option>
-    </select>
+{# partials/card_view.html #}
+<div class="space-y-4">
+  {% for c in p.components %}
+    <div class="p-4 border rounded-lg shadow-sm bg-white">
+      <div class="grid grid-cols-4 gap-4">
+        <div>
+          <span class="font-semibold text-gray-700">Component No</span>
+          <div class="text-gray-800">{{ c.component_no }}</div>
+        </div>
+        <div>
+          <span class="font-semibold text-gray-700">Component Name</span>
+          <div class="text-gray-800">{{ c.component_name }}</div>
+        </div>
+        <div>
+          <span class="font-semibold text-gray-700">Reason</span>
+          <div class="text-gray-800">{{ c.reason }}</div>
+        </div>
+        <div>
+          <span class="font-semibold text-gray-700">Priority</span>
+          <div class="text-gray-800">{{ c.priority }}</div>
+        </div>
+      </div>
+      {% if c.description %}
+        <div class="mt-2 text-gray-600 italic">
+          <span class="font-semibold">Description:</span> {{ c.description }}
+        </div>
+      {% endif %}
     </div>
-    <div class="mt-2 mr-auto flex justify-center items-center space-x-2">
-      <button id="selectAll" class="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600">Select All</button>
-      <button id="deselectAll" class="rounded bg-gray-300 px-3 py-1 text-gray-800 hover:bg-gray-400">Deselect All</button>
+    <p>1</p>
+  {% endfor %}
+
+  {% if p.photos %}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      {% for photo in p.photos %}
+        <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/pictures/' ~ photo) }}" 
+             class="rounded-lg shadow object-cover w-full h-48" alt="Problem Photo">
+      {% endfor %}
     </div>
-  </div>
+  {% endif %}
 </div>
-
-
-<div class=" min-w-full `grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Components Table -->
-    <div class="min-w-full overflow-x-auto border rounded-lg shadow-sm bg-white">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-4 py-2 text-left">Component No</th>
-                    <th class="px-4 py-2 text-left">Component Name</th>
-                    <th class="px-4 py-2 text-left">Reason</th>
-                    <th class="px-4 py-2 text-left">Priority</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for c in p.components %}
-                <tr>
-                    <td class="px-4 py-2">{{ c.component_no }}</td>
-                    <td class="px-4 py-2">{{ c.component_name }}</td>
-                    <td class="px-4 py-2">{{ c.reason }}</td>
-                    <td class="px-4 py-2">{{ c.priority }}</td>
-                </tr>
-                <tr>
-                    <td colspan="4" class="px-4 py-2 text-gray-600 italic">
-                        {{ c.description }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Photos -->
-    <div class="grid grid-cols-2 gap-2">
-        {% for photo in p.photos %}
-            <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/pictures/' ~ photo) }}" 
-                 class="rounded-lg shadow" alt="Problem Photo">
-        {% endfor %}
-    </div>
-</div>
-
-
-
-<script>
-  const featureSelect = document.getElementById("featureSelect");
-    const table = document.getElementById("problemTable");
-
-    // Example extra data for demonstration
-    const extraData = {
-        record_opened_by :          ["to be filled"],
-        record_date:                ["to be filled"],
-        order_no:                   ["to be filled"],
-        group_name:                 ["to be filled"],
-        part_no:                    ["to be filled"],
-        link_stock_code:            ["to be filled"],
-        link_stock_name:            ["to be filled"],
-        part_name:                  ["to be filled"],
-        quantity:                   ["to be filled"],
-        unit:                       ["to be filled"],
-        requester:                  ["to be filled"],
-        nonconformity_description:  ["to be filled"],
-        nonconformity_type:         ["to be filled"],
-        responsible_departmen:      ["to be filled"],
-        action:                     ["to be filled"],
-        priority:                   ["to be filled"],
-        bom_description:            ["to be filled"],
-        status:                     ["to be filled"],
-        planned_closure_date:       ["to be filled"],
-        approval_check:             ["to be filled"],
-        approver:                   ["to be filled"],
-        approval_date:              ["to be filled"],
-        post_record_action:         ["to be filled"]
-        
-    };
-
-    featureSelect.addEventListener("change", () => {
-        const feature = featureSelect.value;
-        const headers = Array.from(table.querySelectorAll("thead th")).map(h => h.dataset.translate || h.innerText.toLowerCase());
-        if (headers.includes(feature)) {
-            alert("This feature is already added!");
-            return;
-        }
-
-        // Add column header
-        const headerRow = table.querySelector("thead tr");
-        const newTh = document.createElement("th");
-        newTh.innerText = feature.charAt(0).toUpperCase() + feature.slice(1);
-        newTh.classList.add("px-6","py-3","text-left","font-semibold","text-gray-600","uppercase","tracking-wider");
-        newTh.dataset.translate = `features.${feature}`;
-        headerRow.appendChild(newTh);
-
-        // Add column cells to each row
-        const rows = table.querySelectorAll("tbody tr");
-        rows.forEach((row, i) => {
-            const newTd = document.createElement("td");
-            newTd.classList.add("px-6","py-4");
-            newTd.innerText = extraData[feature][i] || "-";
-            row.appendChild(newTd);
-        });
-    });
-</script>

@@ -10,6 +10,7 @@ from flask import send_from_directory
 from flask import request, jsonify
 from dropdowns import reasons, department, action, priority
 import requests
+import re
 from collections import defaultdict
 # ------------------------
 # Configure application
@@ -18,30 +19,33 @@ app = Flask(__name__)
 
 
 
-@app.route("/summarize", methods=["POST"])
-def summarize():
-    data = request.get_json()
-    query = data.get("query")
+# @app.route("/summarize", methods=["POST"])
+# def summarize():
+#     data = request.get_json()
+#     query = data.get("query")
 
-    # Call the NLP Cloud Summarization API
-    api_url = "https://api.nlpcloud.io/v1/bart-large-cnn/summarize"
-    headers = {
-        "Authorization": "Bearer YOUR_API_KEY",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "text": query,
-    }
-    response = requests.post(api_url, headers=headers, json=payload)
-    summary = response.json().get("summary", "Sorry, I couldn't generate a summary.")
+#     api_url = "https://api.nlpcloud.io/v1/bart-large-cnn/summarize"
+#     headers = {
+#         "Authorization": "Bearer YOUR_API_KEY",
+#         "Content-Type": "application/json",
+#     }
+#     payload = {"text": query}
 
-    return jsonify({"summary": summary})
+#     response = requests.post(api_url, headers=headers, json=payload)
+#     summary = response.json().get("summary", "Sorry, I couldn't generate a summary.")
+
+#     return jsonify({"summary": summary})
 
 
 
-@app.route('/static/files/uploads/<filename>')
+
+# serve files under static/files/uploads/<folder>/<...>
+@app.route('/static/files/uploads/<path:filename>')
 def uploaded_file(filename):
-    return send_from_directory(os.path.join(app.root_path, '/static/files/uploads'), filename)
+    # Use app.static_folder, and path relative to it
+    uploads_root = os.path.join(app.static_folder, "files", "uploads")
+    # send the correct subpath
+    return send_from_directory(uploads_root, filename)
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
@@ -157,126 +161,166 @@ def register():
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
-    # Get all managers
+    # --- fetch dropdowns and DB references (always defined for GET and POST) ---
     managers = db.execute("SELECT id, manager_name, manager_mail FROM managers")
-
-    # Get all customers
     customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
-
-    # Get all projects
     projects = db.execute("""
         SELECT p.id, p.project_number, p.project_name, p.quantity,
-               m.manager_name, c.customer_name
+               p.manager_id, m.manager_name, c.customer_name
         FROM projects p
         JOIN managers m ON p.manager_id = m.id
         JOIN customers c ON p.customer_id = c.id
     """)
-
-    # Get groups with engineer info (to allow problem linking)
     groups = db.execute("""
         SELECT g.id, g.project_id, e.engineer_name,
-            g.group_number, g.group_name
+               g.group_number, g.group_name
         FROM groups g
         JOIN engineers e ON g.engineer_id = e.id
     """)
-
-
-    # Get components info (to allow problem linking)
     components = db.execute("""
-        SELECT
-            c.id,
-            c.group_id,            -- needed for filtering
-            c.component_no,
-            c.component_name,
-            c.unit_quantity,
-            c.total_quantity
-        FROM components c;
+        SELECT c.id, c.group_id, c.component_no, c.component_name,
+               c.unit_quantity, c.total_quantity
+        FROM components c
     """)
 
+    # dropdown constants (from your module)
+    dropdown_reasons = reasons
+    dropdown_priority = priority
+    dropdown_department = department
+    dropdown_action = action
 
-    data = {
-        "managers": managers,
-        "customers": customers,
-        "projects": projects,
-        "groups": groups,
-        "components": components,
-    }
+    t = get_translations()
+
+    def parse_components_from_form(form):
+        """
+        Supports two shapes:
+         - array-style: component_id[], reason[], department[], action[], priority[], description[]
+         - nested-style: components[0][component_id], components[0][reason], ...
+        Returns list of dicts:
+            [ {"component_id": "...", "reason": "...", ...}, ... ]
+        """
+        # 1) try array-style first
+        arr_component_ids = form.getlist("component_id[]") or form.getlist("component_id")
+        if arr_component_ids:
+            # fetch parallel arrays (safely)
+            reasons_list = form.getlist("reason[]") or form.getlist("reason")
+            departments = form.getlist("department[]") or form.getlist("department")
+            actions = form.getlist("action[]") or form.getlist("action")
+            priorities = form.getlist("priority[]") or form.getlist("priority")
+            descriptions = form.getlist("description[]") or form.getlist("description")
+
+            n = len(arr_component_ids)
+            items = []
+            for i in range(n):
+                items.append({
+                    "component_id": arr_component_ids[i] if i < len(arr_component_ids) else None,
+                    "reason": reasons_list[i] if i < len(reasons_list) else None,
+                    "department": departments[i] if i < len(departments) else None,
+                    "action": actions[i] if i < len(actions) else None,
+                    "priority": priorities[i] if i < len(priorities) else None,
+                    "description": descriptions[i] if i < len(descriptions) else None
+                })
+            return items
+
+        # 2) try nested-style: components[0][component_id]
+        nested = defaultdict(dict)
+        pattern = re.compile(r"components\[(\d+)\]\[(\w+)\]")
+        for key in form.keys():
+            m = pattern.match(key)
+            if m:
+                idx = int(m.group(1))
+                field = m.group(2)
+                nested[idx][field] = form.get(key)
+        if nested:
+            # convert to ordered list
+            return [ nested[i] for i in sorted(nested.keys()) ]
+
+        # none found -> return empty
+        return []
 
     if request.method == "POST":
-        project_id = request.form.get("project_id")
-        group_id = request.form.get("group_id")
-        photos = request.files.getlist("photos")
-        component_ids = request.form.getlist("component_id[]")  # list of selected components
-        reasons = request.form.getlist("reason[]")
-        departments = request.form.getlist("department[]")
-        actions = request.form.getlist("action[]")
-        priorities = request.form.getlist("priority[]")
-        descriptions = request.form.getlist("description[]")
+        # ---- read basic problem fields ----
+        project_id = request.form.get("project_id") or None
+        group_id = request.form.get("group_id") or None
+        planned_closing_date = request.form.get("planned_closing_date") or None
 
-        for i in range(len(component_ids)):
-            db.execute("""
-                INSERT INTO problem_components 
-                (problem_id, component_id, reason, department, action, priority, description)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, problem_id, component_ids[i], reasons[i], departments[i], actions[i], priorities[i], descriptions[i])
+        # ---- parse components (robust) ----
+        components_list = parse_components_from_form(request.form)
 
+        # ---- files ----
+        photos = request.files.getlist("photos")  # <input name="photos" multiple>
 
+        # ---- create df number and folders ----
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
-
-        components_data = []
-
-        
-
         folder_name = df_number
-        # ✅ Corrected: no leading slash, path relative to project
-        base_dir = os.path.join(os.path.dirname(__file__), "static", "files", "uploads", folder_name)
+        base_dir = os.path.join(app.static_folder, "files", "uploads", folder_name)
         pictures_dir = os.path.join(base_dir, "pictures")
         os.makedirs(pictures_dir, exist_ok=True)
 
-        photo_filenames = []
+        saved_photo_filenames = []
         for idx, photo in enumerate(photos, start=1):
             if photo and photo.filename:
-                filename = secure_filename(f"{folder_name}_{idx}.jpg")
+                ext = os.path.splitext(photo.filename)[1] or ".jpg"
+                filename = secure_filename(f"{folder_name}_{idx}{ext}")
                 photo.save(os.path.join(pictures_dir, filename))
-                photo_filenames.append(filename)
+                saved_photo_filenames.append(filename)
 
-        # print("DEBUG:", project_id, group_id, df_number, session["user_id"], reason, description, photo_filenames)
-
-        # 1. Insert the main problem
+        # ---- Insert main problems row using cs50.SQL execute (no cursor) ----
         db.execute("""
-            INSERT INTO problems (project_id, group_id, user_id)
-            VALUES (?, ?, ?)
-        """, project_id, group_id, session["user_id"])
+            INSERT INTO problems (project_id, group_id, user_id, planned_closing_date)
+            VALUES (?, ?, ?, ?)
+        """, project_id, group_id, session.get("user_id"), planned_closing_date)
 
-        # Get the ID of the newly created problem
+        # get inserted problem id
         problem_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
 
-        # 2. Insert the detailed component info
-        db.execute("""
-            INSERT INTO problem_components 
-            (problem_id, component_id, reason, department, action, priority, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, problem_id, component_ids, reasons, department, action, priority, descriptions)
+        # ---- Insert problem_components and problem_steps per component ----
+        for comp in components_list:
+            comp_id = comp.get("component_id") or comp.get("component") or None
+            reason_v = comp.get("reason")
+            department_v = comp.get("department")
+            action_v = comp.get("action")
+            priority_v = comp.get("priority")
+            description_v = comp.get("description")
 
-        # 3. (Optional) If you still need problem_steps
-        db.execute("""
-            INSERT INTO problem_steps (problem_id, step_number, df_filename)
-            VALUES (?, ?, ?)
-        """, problem_id, 1, f"{df_number}.xlsx")
+            db.execute("""
+                INSERT INTO problem_components
+                (problem_id, component_id, reason, department, action, priority, description)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, problem_id, comp_id, reason_v, department_v, action_v, priority_v, description_v)
 
+            # add initial step row for that component (adjust fields to your schema)
+            db.execute("""
+                INSERT INTO problem_steps
+                (problem_id, component_id, step_number, df_filename, quantity, action, status, planned_closing_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, problem_id, comp_id, 1, f"{df_number}.xlsx", 0, action_v or "Initial", "Open", planned_closing_date)
+
+        # optionally: store photo filenames somewhere (if you add a column to problems or a photos table)
+        # e.g. db.execute("UPDATE problems SET photos_id = ? WHERE id = ?", ",".join(saved_photo_filenames), problem_id)
 
         flash("Problem reported successfully!", "success")
         return redirect("/")
 
-    t = get_translations()
-    return render_template("admin.html",  
-                        data=data,
-                        reasons = reasons,
-                        priority = priority,
-                        department = department,
-                        action = action,
-                        t=t)
+    # GET → render upload.html
+    # NOTE: pass the dropdown objects under expected names
+    return render_template(
+        "upload.html",
+        data={
+            "projects": projects,
+            "groups": groups,
+            "components": components,
+            "managers": managers,
+            "customers": customers
+        },
+        reasons=reasons,
+        department=department,
+        action=action,
+        priority=priority,
+        t=t
+    )
+
 
 # -------------------- INFO --------------------
 @app.route("/info", methods=["GET"])

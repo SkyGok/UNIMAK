@@ -1,98 +1,110 @@
 {% extends "layout.html" %}
 
-{% block title %}
-    Upload
-{% endblock %}
+{% block title %}Upload{% endblock %}
 
 {% block main %}
-    <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6" data-translate="upload.title">Report a Project Issue</h1>
+<div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6" data-translate="upload.title">Report a Project Issue</h1>
+    
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
         
-        <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
-            
-            <!-- Project Number -->
+        <!-- Project Number -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Project Number</label>
+            <select name="project_id" id="project_select"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                <option value="">Select Project</option>
+                {% for p in data.projects %}
+                    <option value="{{ p.id }}">{{ p.project_number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Work Order / Group -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Work Order</label>
+            <select name="group_id" id="group_select"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                <option value="">Select Group</option>
+                {% for g in data.groups %}
+                    <option value="{{ g.id }}" data-project="{{ g.project_id }}">{{ g.group_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Auto-filled project details -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block text-sm font-medium text-gray-700" data-translate="upload.project_number">Project Number</label>
-                <select name="project_id" id="project_select"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                    <option value="">Select Project</option>
-                    {% for p in data.projects %}
-                        <option value="{{ p.id }}">{{ p.project_number }}</option>
-                    {% endfor %}
-                </select>
+                <label class="block mb-2 font-medium">Project Name</label>
+                <input type="text" id="project_name" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
             </div>
-
-            <!-- Work Order -->
             <div>
-                <label class="block text-sm font-medium text-gray-700" data-translate="upload.work_order">Work Order</label>
-                <select name="group_id" id="group_select"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
-                    <option value="">Select Group</option>
-                </select>
+                <label class="block mb-2 font-medium">Customer</label>
+                <input type="text" id="customer" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
             </div>
+            <div>
+                <label class="block mb-2 font-medium">Manager</label>
+                <input type="text" id="manager" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+            </div>
+        </div>
 
-            <!-- Auto-filled details -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="project_name" class="block mb-2 font-medium" data-translate="upload.project_name">Project Name</label>
-                    <input type="text" id="project_name" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-                <div>
-                    <label for="customer" class="block mb-2 font-medium" data-translate="upload.customer">Customer</label>
-                    <input type="text" id="customer" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-                <div>
-                    <label for="manager" class="block mb-2 font-medium" data-translate="upload.manager">Manager</label>
-                    <input type="text" id="manager" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
-                </div>
-            </div >
+        <!-- Planned Closing Date -->
+        <div>
+            <label for="planned_closing_date" class="block text-sm font-medium text-gray-700">
+                Planned Closing Date
+            </label>
+            <input type="date" id="planned_closing_date" name="planned_closing_date"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required>
+        </div>
 
-            <!-- reporting problematic multipla components or problems  -->
-            <div class="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-
+        <!-- Components -->
         <div id="componentsContainer" class="space-y-6 mt-6">
             <div class="component-row p-4 border rounded-lg shadow-sm bg-gray-50 relative">
                 <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700 remove-component">&times;</button>
 
                 <!-- Component -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.component">Component</label>
+                    <label class="block text-sm font-medium">Component</label>
                     <select name="components[0][component_id]" class="component_select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
                         <option value="">Select Component</option>
+                        {% for c in data.components %}
+                            <option value="{{ c.id }}">{{ c.component_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
-                <!-- Problem classification -->
+                <!-- Classification -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
                     <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.reason">Reason</label>
+                        <label class="block mb-2 font-medium">Reason</label>
                         <select name="components[0][reason]" class="w-full border rounded px-3 py-2">
                             {% for r in reasons %}
-                                <option value="{{ r.key }}" data-translate="{{ r.key }}">{{ r.default }}</option>
+                                <option value="{{ r.key }}">{{ r.default }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.department">Department</label>
+                        <label class="block mb-2 font-medium">Department</label>
                         <select name="components[0][department]" class="w-full border rounded px-3 py-2">
                             {% for d in department %}
-                                <option value="{{ d.key }}" data-translate="{{ d.key }}">{{ d.default }}</option>
+                                <option value="{{ d.key }}">{{ d.default }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.action">Action</label>
+                        <label class="block mb-2 font-medium">Action</label>
                         <select name="components[0][action]" class="w-full border rounded px-3 py-2">
                             {% for a in action %}
-                                <option value="{{ a.key }}" data-translate="{{ a.key }}">{{ a.default }}</option>
+                                <option value="{{ a.key }}">{{ a.default }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label class="block mb-2 font-medium" data-translate="upload.priority">Priority</label>
+                        <label class="block mb-2 font-medium">Priority</label>
                         <select name="components[0][priority]" class="w-full border rounded px-3 py-2">
                             {% for p in priority %}
-                                <option value="{{ p.key }}" data-translate="{{ p.key }}">{{ p.default }}</option>
+                                <option value="{{ p.key }}">{{ p.default }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -100,108 +112,66 @@
 
                 <!-- Description -->
                 <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700" data-translate="upload.description">Description</label>
+                    <label class="block text-sm font-medium">Description</label>
                     <textarea name="components[0][description]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
                 </div>
             </div>
         </div>
 
-        <!-- Add Component Button -->
+        <!-- Add Component -->
         <div class="flex justify-end pt-3">
             <button type="button" id="addComponentBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700">Add Component</button>
         </div>
-            
-            <!-- Image Upload -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="upload.upload_photos">Upload Photos (max 6)</label>
-                    <div id="imagePreview" class="flex flex-wrap gap-4">
-                        <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <span class="text-3xl text-gray-400">+</span>
-                            <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
-                        </label>
-                    </div>
-                </div>
-            
-            
-            <!-- Submit -->
-            <div class="flex justify-end">
-                <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none"
-                        data-translate="upload.submit">
-                    Submit Report
-                </button>
+
+        <!-- Photos -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Upload Photos (max 6)</label>
+            <div id="imagePreview" class="flex flex-wrap gap-4">
+                <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <span class="text-3xl text-gray-400">+</span>
+                    <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
+                </label>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none">
+                Submit Report
+            </button>
+        </div>
+    </form>
+</div>
+
 <script>
 let componentIndex = 1;
 
-// --- Dynamic Components ---
-function createComponentRow(index) {
-    const template = document.querySelector('.component-row');
-    const clone = template.cloneNode(true);
-
-    clone.querySelectorAll('select, textarea').forEach(el => {
-        el.name = el.name.replace(/\d+/, index);
-        if (el.tagName === 'SELECT') el.selectedIndex = 0;
-        else if (el.tagName === 'TEXTAREA') el.value = '';
-    });
-
-    const removeBtn = clone.querySelector('.remove-component');
-    removeBtn.addEventListener('click', () => clone.remove());
-
-    populateDropdowns(clone);
-
-    // Listen to group change for this row only
-    const groupSelectRow = document.getElementById('group_select');
-    const componentSelectRow = clone.querySelector('.component_select');
-    groupSelectRow.addEventListener('change', () => populateComponentsForRow(componentSelectRow, groupSelectRow.value));
-
-    return clone;
-}
-
-function populateDropdowns(row) {
-    const reasonSelect = row.querySelector('select[name$="[reason]"]');
-    const departmentSelect = row.querySelector('select[name$="[department]"]');
-    const actionSelect = row.querySelector('select[name$="[action]"]');
-    const prioritySelect = row.querySelector('select[name$="[priority]"]');
-
-    reasonSelect.innerHTML = '';
-    departmentSelect.innerHTML = '';
-    actionSelect.innerHTML = '';
-    prioritySelect.innerHTML = '';
-
-    data.reasons.forEach(r => { const opt = document.createElement('option'); opt.value = r.key; opt.textContent = r.default; reasonSelect.appendChild(opt); });
-    data.department.forEach(d => { const opt = document.createElement('option'); opt.value = d.key; opt.textContent = d.default; departmentSelect.appendChild(opt); });
-    data.action.forEach(a => { const opt = document.createElement('option'); opt.value = a.key; opt.textContent = a.default; actionSelect.appendChild(opt); });
-    data.priority.forEach(p => { const opt = document.createElement('option'); opt.value = p.key; opt.textContent = p.default; prioritySelect.appendChild(opt); });
-}
-
-function populateComponentsForRow(componentSelectRow, groupId = null) {
-    componentSelectRow.innerHTML = '<option value="">Select Component</option>';
-    const filtered = groupId ? data.components.filter(c => String(c.group_id) === String(groupId)) : data.components;
-    filtered.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.component_no ?? c.component_name ?? c.id;
-        componentSelectRow.appendChild(opt);
-    });
-}
-
-// Add component row
+// Add Component Row
 document.getElementById('addComponentBtn').addEventListener('click', () => {
     const container = document.getElementById('componentsContainer');
-    const newRow = createComponentRow(componentIndex);
-    container.appendChild(newRow);
+    const template = container.querySelector('.component-row');
+    const clone = template.cloneNode(true);
+
+    // Update names with new index
+    clone.querySelectorAll('select, textarea').forEach(el => {
+        el.name = el.name.replace(/\d+/, componentIndex);
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        if (el.tagName === 'TEXTAREA') el.value = '';
+    });
+
+    // Add remove handler
+    clone.querySelector('.remove-component').addEventListener('click', () => clone.remove());
+
+    container.appendChild(clone);
     componentIndex++;
 });
 
-// Initial row remove button
+// Initial remove handler
 document.querySelectorAll('.remove-component').forEach(btn => {
     btn.addEventListener('click', () => btn.closest('.component-row').remove());
 });
 
-// --- Image preview ---
+// Image Preview
 const photoInput = document.getElementById('photoInput');
 const imagePreview = document.getElementById('imagePreview');
 let filesArray = [];
@@ -223,7 +193,7 @@ photoInput.addEventListener('change', (e) => {
             img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-lg', 'shadow');
             const removeBtn = document.createElement('button');
             removeBtn.innerHTML = "×";
-            removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
+            removeBtn.classList.add('absolute', '-top-2', '-right-2', 'bg-red-500', 'text-white', 'rounded-full', 'w-6', 'h-6');
             removeBtn.addEventListener('click', () => { filesArray = filesArray.filter(f => f !== file); imgContainer.remove(); });
             imgContainer.appendChild(img);
             imgContainer.appendChild(removeBtn);
@@ -233,65 +203,33 @@ photoInput.addEventListener('change', (e) => {
     });
 });
 
-// --- Data from Flask ---
-const data = {
-    projects: {{ data.projects | tojson }},
-    groups: {{ data.groups | tojson }},
-    components: {{ data.components | tojson }},
-    managers: {{ data.managers | tojson }},
-    customers: {{ data.customers | tojson }},
-    reasons: {{ data.reasons | tojson }},
-    department: {{ data.department | tojson }},
-    action: {{ data.action | tojson }},
-    priority: {{ data.priority | tojson }}
-};
-
+// Auto-fill project details when project selected
 const projectSelect = document.getElementById('project_select');
-const groupSelect = document.getElementById('group_select');
-const projectNameField = document.getElementById('project_name');
-const customerField = document.getElementById('customer');
-const managerField = document.getElementById('manager');
+const projectNameInput = document.getElementById('project_name');
+const customerInput = document.getElementById('customer');
+const managerInput = document.getElementById('manager');
 
-function populateGroups(projectId = null) {
-    groupSelect.innerHTML = '<option value="">Select Group</option>';
-    const filtered = projectId ? data.groups.filter(g => String(g.project_id) === String(projectId)) : data.groups;
-    filtered.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g.id;
-        opt.textContent = g.group_number ?? g.group_name ?? g.id;
-        groupSelect.appendChild(opt);
-    });
-}
-
-// Project change updates group and autofill details
+const projectsData = {{ data.projects | tojson }};
 projectSelect.addEventListener('change', () => {
     const pid = projectSelect.value;
-    populateGroups(pid || null);
-    document.querySelectorAll('.component-row').forEach(row => {
-        const compSelect = row.querySelector('.component_select');
-        populateComponentsForRow(compSelect, null);
+    const proj = projectsData.find(p => p.id == pid);
+    if (proj) {
+        projectNameInput.value = proj.project_name;
+        customerInput.value = proj.customer_name;
+        managerInput.value = proj.manager_name;
+    } else {
+        projectNameInput.value = "";
+        customerInput.value = "";
+        managerInput.value = "";
+    }
+
+    // Filter groups based on selected project
+    const groupSelect = document.getElementById('group_select');
+    groupSelect.querySelectorAll('option').forEach(opt => {
+        if (opt.value === "") return;
+        opt.style.display = opt.dataset.project == pid ? "block" : "none";
     });
-
-    const proj = data.projects.find(p => String(p.id) === String(pid));
-    projectNameField.value = proj?.project_name || '';
-    customerField.value = proj?.customer_name || '';
-    managerField.value = proj?.manager_name || '';
+    groupSelect.value = "";
 });
-
-// Group change updates components for each row
-groupSelect.addEventListener('change', () => {
-    const gid = groupSelect.value;
-    document.querySelectorAll('.component-row').forEach(row => {
-        const compSelect = row.querySelector('.component_select');
-        populateComponentsForRow(compSelect, gid || null);
-    });
-});
-
-// Initial load
-populateGroups();
-document.querySelectorAll('.component-row').forEach(row => populateDropdowns(row));
 </script>
-
-
-
 {% endblock %}
