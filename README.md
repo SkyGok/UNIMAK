@@ -90,7 +90,7 @@ It allows project managers, engineers, and other stakeholders to **log, track, a
 1. **Clone the repository**
    ```bash
    git clone https://github.com/your-company/problem-tracking.git
-   cd problem-tracking
+   cd backend
 ````
 
 2. **Create and activate a virtual environment**
@@ -154,21 +154,14 @@ It allows project managers, engineers, and other stakeholders to **log, track, a
 
 * User authentication & roles (admin, engineer, manager).
 * Advanced search and filtering.
-* Export reports (PDF/Excel).
+* Admin port
+* Export and import reports (PDF/Excel).
 * Notifications and approval workflow.
 
 ---
 
 ## 👨‍💼 Author
 
-Developed by **\[Your Name]** for **\[Company Name]**.
-Contact: \[[your.email@company.com](mailto:your.email@company.com)]
+Developed by **Gokhan Dulger** for **UNIMAK**.
+Contact: gokhanskydulger@gmail.com
 
----
-
-```
-
----
-
-Would you like me to write it as if it’s **for public GitHub (open-source style)**, or should I keep it more **internal-company oriented** (e.g., focusing on usage by employees, not contributors)?
-```
