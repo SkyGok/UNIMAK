@@ -5,350 +5,42 @@
 {% endblock %}
 
 {% block main %}
-
-<!-- jQuery + Select2 JS -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<div class="p-6 bg-gray-50 min-h-screen">
-    <!-- Header Section -->
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-800" data-translate="home.title">Problem Reports</h1>
-        <!-- Feature Selector -->
-        <div class="ml-auto">
-            <label for="featureSelect" class="mr-2 font-medium text-gray-700" data-translate="home.add_column">Add Column:</label>
-            <select id="featureSelect" class="px-2 py-1 border rounded shadow-sm text-sm">
-                <option value="" disabled selected data-translate="home.select_feature">Select a feature</option>
-                <option value="record_opened_by" data-translate="features.record_opened_by">Record Opened By</option>
-                <option value="record_date" data-translate="features.record_date">Record Date</option>
-                <option value="order_no" data-translate="features.order_no">Order No</option>
-                <option value="group_name" data-translate="features.group_name">Group Name</option>
-                <option value="part_no" data-translate="features.part_no">Part No</option>
-                <option value="link_stock_code" data-translate="features.link_stock_code">Stock Code</option>
-                <option value="link_stock_name" data-translate="features.link_stock_name">Stock Name</option>
-                <option value="part_name" data-translate="features.part_name">Part Name</option>
-                <option value="quantity" data-translate="features.quantity">Quantity</option>
-                <option value="unit" data-translate="features.unit">Unit</option>
-                <option value="requester" data-translate="features.requester">Requester</option>
-                <option value="nonconformity_description" data-translate="features.nonconformity_description">Nonconformity Description</option>
-                <option value="nonconformity_type" data-translate="features.nonconformity_type">Nonconformity Type</option>
-                <option value="responsible_departmen" data-translate="features.responsible_departmen">Responsible Department</option>
-                <option value="action" data-translate="features.action">Action</option>
-                <option value="priority" data-translate="features.priority">Priority</option>
-                <option value="bom_description" data-translate="features.bom_description">BOM Description</option>
-                <option value="status" data-translate="features.status">Status</option>
-                <option value="planned_closure_date" data-translate="features.planned_closure_date">Planned Closure Date</option>
-                <option value="approval_check" data-translate="features.approval_check">Approval Check</option>
-                <option value="approver" data-translate="features.approver">Approver</option>
-                <option value="approval_date" data-translate="features.approval_date">Approval Date</option>
-                <option value="post_record_action" data-translate="features.post_record_action">Post Record Action</option>
-            </select>
-            <div class="mt-2 flex space-x-2 justify-center items-center">
-                <button id="selectAll" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Select All</button>
-                <button id="deselectAll" class="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Deselect All</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Table Container -->
-    <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-        <table id="problemTable" class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.df_number">DF Number</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.project">Project</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.manager">Manager</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.reason">Reason</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.status">Status</th>
-                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider" data-translate="home.columns.actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                
-                {% for p in data %}
-                <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="openDetails('{{ p.df_number }}')">
-                    <td class="px-6 py-4 font-medium text-gray-900">{{ p.df_number }}</td>
-                    <td class="px-6 py-4 text-gray-700">{{ p.project_number }}</td>
-                    <td class="px-6 py-4 text-gray-700">{{ p.manager_name }}</td>
-                    <td class="px-6 py-4 text-red-500 font-semibold" data-translate="{{ p.reason }}">
-                        {{ p.reason_display }}
-                    </td>
-                    <td class="px-6 py-4">
-                        {% if p.status == "Completed" %}
-                            <span class="px-2 py-1 rounded-lg text-xs bg-green-100 text-green-800" data-translate="status.completed">Completed</span>
-                        {% elif p.status == "Pending" %}
-                            <span class="px-2 py-1 rounded-lg text-xs bg-yellow-100 text-yellow-800" data-translate="status.pending">Pending</span>
-                        {% else %}
-                            <span class="px-2 py-1 rounded-lg text-xs bg-red-100 text-red-800" data-translate="status.issue">Issue</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4">
-                        <button class="text-blue-600 hover:underline" data-translate="table.view">View</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-
-        
-    </div>
-
-    <!-- Sidebar (Hidden by default, opens on row click) -->
-    <div id="detailsPanel" class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-6 hidden overflow-y-auto">
-        <button onclick="closeDetails()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">✖</button>
-        <h2 class="text-xl font-bold mb-4" data-translate="sidebar.title">Problem Report Details</h2>
-        <div id="detailsContent">
-            <p class="text-gray-600" data-translate="sidebar.placeholder">Select a report to view details...</p>
-        </div>
-    </div>
-
-
-    <!-- Chatbox Button -->
-    <button id="chatboxBtn" class="fixed bottom-6 right-6 p-4 bg-orange-600 text-white rounded-full shadow-lg">
-    💬
-    </button>
-
-    <!-- Chatbox Modal -->
-    <div id="chatbox" class="fixed bottom-0 right-0 w-80 bg-white shadow-lg rounded-t-lg p-4 hidden">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">DF Problem Summary</h3>
-        <button id="closeChat" class="text-gray-500">✖</button>
-    </div>
-    <div id="chatContent" class="mb-4">
-        <p class="text-gray-600">Select a report to view details...</p>
-    </div>
-    <textarea id="userInput" class="w-full p-2 border rounded mb-4" placeholder="Ask something..." rows="3"></textarea>
-    <button id="sendMessage" class="w-full p-2 bg-blue-600 text-white rounded">Send</button>
-    </div>
-
-    <!-- Photo Lightbox Modal -->
-    <div id="photoLightbox" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
-        <button id="closeLightbox" class="absolute top-4 right-4 text-white text-3xl font-bold">✖</button>
-        <div class="relative w-full max-w-5xl h-4/5 flex items-center justify-center">
-            <button id="prevPhoto" class="absolute left-0 text-white text-4xl px-4 cursor-pointer">❮</button>
-            <img id="lightboxImg" src="" class="max-h-full max-w-full object-contain rounded-lg shadow-lg">
-            <button id="nextPhoto" class="absolute right-0 text-white text-4xl px-4 cursor-pointer">❯</button>
-        </div>
-    </div>
-
-
+<div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-6 py-3 text-left">DF File</th>
+                <th class="px-6 py-3 text-left">Project</th>
+                <th class="px-6 py-3 text-left">Manager</th>
+                <th class="px-6 py-3 text-left">Customer</th>
+                <th class="px-6 py-3 text-left">Engineer</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            {% for p in data %}
+            <tr onclick="openDetails('{{ p.problem_id }}')" class="hover:bg-gray-300">
+                <td class="px-6 py-4 font-medium">{{ p.df_filename }}</td>
+                <td class="px-6 py-4">{{ p.project_number }} - {{ p.project_name }}</td>
+                <td class="px-6 py-4">{{ p.manager_name }}</td>
+                <td class="px-6 py-4">{{ p.customer_name }}</td>
+                <td class="px-6 py-4">{{ p.engineer_name }}</td>
+            </tr>
+            <tr id="details-{{ p.problem_id }}" class="hidden">
+                <td colspan="6" class="p-4 bg-gray-50">
+                    {% include "partials/card_view.html" %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    const problemData = {{ data | tojson }};
+function openDetails(id) {
+    let row = document.getElementById("details-" + id);
+    row.classList.toggle("hidden");
+}
 </script>
 
-
-<script>
-    const featureSelect = document.getElementById("featureSelect");
-    const table = document.getElementById("problemTable");
-
-    // Example extra data for demonstration
-    const extraData = {
-        record_opened_by :          ["to be filled"],
-        record_date:                ["to be filled"],
-        order_no:                   ["to be filled"],
-        group_name:                 ["to be filled"],
-        part_no:                    ["to be filled"],
-        link_stock_code:            ["to be filled"],
-        link_stock_name:            ["to be filled"],
-        part_name:                  ["to be filled"],
-        quantity:                   ["to be filled"],
-        unit:                       ["to be filled"],
-        requester:                  ["to be filled"],
-        nonconformity_description:  ["to be filled"],
-        nonconformity_type:         ["to be filled"],
-        responsible_departmen:      ["to be filled"],
-        action:                     ["to be filled"],
-        priority:                   ["to be filled"],
-        bom_description:            ["to be filled"],
-        status:                     ["to be filled"],
-        planned_closure_date:       ["to be filled"],
-        approval_check:             ["to be filled"],
-        approver:                   ["to be filled"],
-        approval_date:              ["to be filled"],
-        post_record_action:         ["to be filled"]
-        
-    };
-
-    featureSelect.addEventListener("change", () => {
-        const feature = featureSelect.value;
-        const headers = Array.from(table.querySelectorAll("thead th")).map(h => h.dataset.translate || h.innerText.toLowerCase());
-        if (headers.includes(feature)) {
-            alert("This feature is already added!");
-            return;
-        }
-
-        // Add column header
-        const headerRow = table.querySelector("thead tr");
-        const newTh = document.createElement("th");
-        newTh.innerText = feature.charAt(0).toUpperCase() + feature.slice(1);
-        newTh.classList.add("px-6","py-3","text-left","font-semibold","text-gray-600","uppercase","tracking-wider");
-        newTh.dataset.translate = `features.${feature}`;
-        headerRow.appendChild(newTh);
-
-        // Add column cells to each row
-        const rows = table.querySelectorAll("tbody tr");
-        rows.forEach((row, i) => {
-            const newTd = document.createElement("td");
-            newTd.classList.add("px-6","py-4");
-            newTd.innerText = extraData[feature][i] || "-";
-            row.appendChild(newTd);
-        });
-    });
-
-    function openDetails(df_number) {
-        const detailsPanel = document.getElementById("detailsPanel");
-        const detailsContent = document.getElementById("detailsContent");
-
-        const problem = problemData.find(p => p.df_number === df_number);
-        if (!problem) return;
-
-        let html = `
-            <p><strong data-translate="sidebar.df_number">DF Number:</strong> ${problem.df_number}</p>
-            <p><strong data-translate="sidebar.project">Project:</strong> ${problem.project_number}</p>
-            <p><strong data-translate="sidebar.manager">Manager:</strong> ${problem.manager_name}</p>
-            <p><strong data-translate="sidebar.reason">Reason:</strong> ${problem.reason}</p>
-            <p><strong data-translate="sidebar.description">Description:</strong></p>
-            <p>${problem.description || "-"}</p>
-            <p><strong data-translate="sidebar.photos">Photos:</strong></p>
-            <div class="flex flex-wrap gap-2 mt-2">
-        `;
-
-        const photos = problem.photo_urls || [];
-
-        if (photos.length === 0) {
-            html += `<p class="text-gray-500">No photos available</p>`;
-        } else {
-            photos.forEach((photo, idx) => {
-                html += `<img src="${photo}" class="w-24 h-24 object-cover rounded shadow cursor-pointer" 
-                        onclick="openLightbox([${photos.map(p => `'${p}'`).join(',')}], ${idx})" />`;
-            });
-        }
-
-        html += `</div>`;
-        detailsContent.innerHTML = html;
-        detailsPanel.classList.remove("hidden");
-    }
-
-
-
-
-
-    function closeDetails() {
-        document.getElementById("detailsPanel").classList.add("hidden");
-    }
-
-    document.getElementById("llmChatHeader").addEventListener("click", () => {
-        const content = document.getElementById("llmChatContent");
-        const inputArea = document.getElementById("llmChatInput").parentElement;
-        const chatBox = document.getElementById("llmChatBox");
-        if (content.style.display === "none") {
-            content.style.display = "block";
-            inputArea.style.display = "flex";
-            chatBox.style.height = "400px";
-        } else {
-            content.style.display = "none";
-            inputArea.style.display = "none";
-            chatBox.style.height = "40px";
-        }
-    });
-
-    document.getElementById("llmChatSend").addEventListener("click", async () => {
-        const input = document.getElementById("llmChatInput");
-        const msg = input.value.trim();
-        if (!msg) return;
-
-        const chatContent = document.getElementById("llmChatContent");
-        chatContent.innerHTML += `<p><strong>You:</strong> ${msg}</p>`;
-        input.value = "";
-
-        // Send to Flask
-        const response = await fetch("/llm_summary", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: msg })
-        });
-
-        const data = await response.json();
-        chatContent.innerHTML += `<p><strong>LLM:</strong> ${data.answer}</p>`;
-        chatContent.scrollTop = chatContent.scrollHeight;
-    });
-</script>
-
-<script>
-  const chatboxBtn = document.getElementById("chatboxBtn");
-  const chatbox = document.getElementById("chatbox");
-  const closeChat = document.getElementById("closeChat");
-  const sendMessage = document.getElementById("sendMessage");
-  const userInput = document.getElementById("userInput");
-  const chatContent = document.getElementById("chatContent");
-
-  // Toggle chatbox visibility
-  chatboxBtn.addEventListener("click", () => {
-    chatbox.classList.toggle("hidden");
-  });
-
-  closeChat.addEventListener("click", () => {
-    chatbox.classList.add("hidden");
-  });
-
-  // Handle message sending
-  sendMessage.addEventListener("click", async () => {
-    const query = userInput.value.trim();
-    if (query) {
-      const response = await fetch("/summarize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query }),
-      });
-      const data = await response.json();
-      chatContent.innerHTML = `<p class="text-gray-600">${data.summary}</p>`;
-      userInput.value = "";
-    }
-  });
-
-  let currentPhotos = [];
-let currentIndex = 0;
-
-function openLightbox(photos, startIndex=0) {
-    currentPhotos = photos;
-    currentIndex = startIndex;
-
-    const lightbox = document.getElementById("photoLightbox");
-    const img = document.getElementById("lightboxImg");
-
-    img.src = currentPhotos[currentIndex];
-    lightbox.classList.remove("hidden");
-}
-
-function closeLightbox() {
-    document.getElementById("photoLightbox").classList.add("hidden");
-}
-
-// Navigate photos
-function nextPhoto() {
-    if (currentPhotos.length === 0) return;
-    currentIndex = (currentIndex + 1) % currentPhotos.length;
-    document.getElementById("lightboxImg").src = currentPhotos[currentIndex];
-}
-
-function prevPhoto() {
-    if (currentPhotos.length === 0) return;
-    currentIndex = (currentIndex - 1 + currentPhotos.length) % currentPhotos.length;
-    document.getElementById("lightboxImg").src = currentPhotos[currentIndex];
-}
-
-// Event listeners
-document.getElementById("closeLightbox").addEventListener("click", closeLightbox);
-document.getElementById("nextPhoto").addEventListener("click", nextPhoto);
-document.getElementById("prevPhoto").addEventListener("click", prevPhoto);
-
-
-  
-</script>
 
 {% endblock %}
