@@ -1,6 +1,3 @@
-Got it 👍 I’ll draft you a clean and professional `README.md` for your company’s internal problem-reporting website. This will document what it is, how to run it, and how to use it. You can expand it with company-specific details later.
-
-Here’s a starting point:
 
 ```markdown
 # Problem Reporting & Tracking System
@@ -42,48 +39,6 @@ It allows project managers, engineers, and other stakeholders to **log, track, a
 
 ---
 
-## 📂 Project Structure
-
-```
-
-.
-├── app.py                # Main Flask application
-├── dropdowns.py          # Dropdown constants (reasons, priority, etc.)
-├── helpers.py            # Utility functions
-├── requirements.txt      # Python dependencies
-│
-├── static/               # Static assets
-│   ├── css/              # Stylesheets
-│   ├── js/               # JavaScript files
-│   ├── files/            # File storage
-│   │   ├── unimak.db     # SQLite database
-│   │   ├── db.py         # Database helper script
-│   │   ├── db.txt        # DB notes/exports
-│   │   ├── panda.py      # Pandas processing script
-│   │   └── uploads/      # Uploaded files (photos, reports, etc.)
-│   └── translations.json # Translation dictionary
-│
-├── templates/            # Jinja2 templates
-│   ├── layout.html       # Base layout
-│   ├── login.html        # Login page
-│   ├── register.html     # Registration page
-│   ├── home.html         # Homepage
-│   ├── home2.html        # Alternate homepage
-│   ├── admin.html        # Admin dashboard
-│   ├── history.html      # History / logs
-│   ├── upload.html       # Problem upload form
-│   ├── settings.html     # User settings
-│   ├── info.html         # Info page
-│   ├── apology.html      # Error/Apology page
-│   └── partials/         # Reusable components
-│       ├── card\_view\.html
-│       └── project\_card.html
-│
-└── venv/                 # Virtual environment (not tracked in Git usually)
-├── bin/              # Scripts & executables
-├── lib/              # Installed libraries
-└── pyvenv.cfg
-
 
 ## ⚡ Installation & Setup
 
@@ -121,7 +76,7 @@ It allows project managers, engineers, and other stakeholders to **log, track, a
    flask run
    ```
 
-6. Open your browser and go to:
+6. **Open your browser and go to**:
 
    ```
    http://127.0.0.1:5000
@@ -131,7 +86,19 @@ It allows project managers, engineers, and other stakeholders to **log, track, a
 
 ## 📸 Screenshots
 
-*(Add here screenshots of the main dashboard, problem card view, and photo uploads for better clarity.)*
+### Log In
+![Home Page](backend/static/screenshots/login_page.png)
+
+### Home Page
+![Home Page](backend/static/screenshots/home_page.png)
+
+### Home Page Card Opened
+![Home Page](backend/static/screenshots/home_page_2.png)
+
+### Upload Form
+![Upload Form](backend/static/screenshots/upload_page.png)
+
+
 
 ---
 
