@@ -457,7 +457,7 @@ def history():
 @login_required
 def admin():
     # need to create them admin features
-    # and then
+    # and then I'll continue on newFeatures branch for this.  This shall stay as it is....
     return render_template("admin.html")
 
 
