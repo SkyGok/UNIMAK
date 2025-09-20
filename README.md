@@ -8,6 +8,8 @@ The system is built with **Flask (Python)**, **SQLite**, **Jinja2 templates**, a
 It allows project managers, engineers, and other stakeholders to **log, track, and resolve problems** in an organized and transparent way.
 
 ---
+### Video Demo:  <https://youtu.be/FzHdTrJX1_Q>
+---
 
 ## 🚀 Features
 
