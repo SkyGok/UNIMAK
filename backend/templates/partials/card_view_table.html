@@ -1,0 +1,38 @@
+{# partials/card_view_table.html #}
+<div class="p-4 border rounded-lg shadow-sm bg-white overflow-x-auto">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="px-4 py-2 text-left">Component No</th>
+        <th class="px-4 py-2 text-left">Component Name</th>
+        <th class="px-4 py-2 text-left">Reason</th>
+        <th class="px-4 py-2 text-left">Priority</th>
+        <th class="px-4 py-2 text-left">Description</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200">
+      {% set seen = "" %}
+      {% for c in p.components %}
+        {% if seen.find(c.component_no ~ "-" ~ c.reason) == -1 %}
+          {% set seen = seen + c.component_no ~ "-" ~ c.reason ~ "," %}
+          <tr>
+            <td class="px-4 py-2">{{ c.component_no }}</td>
+            <td class="px-4 py-2">{{ c.component_name }}</td>
+            <td class="px-4 py-2">{{ c.reason }}</td>
+            <td class="px-4 py-2">{{ c.priority }}</td>
+            <td class="px-4 py-2 italic">{{ c.description or "-" }}</td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if p.photos %}
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+    {% for photo in p.photos %}
+      <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/pictures/' ~ photo) }}" 
+           class="rounded-lg shadow object-cover w-full h-48" alt="Problem Photo">
+    {% endfor %}
+  </div>
+{% endif %}
