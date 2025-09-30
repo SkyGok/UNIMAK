@@ -7,25 +7,25 @@
       <div class="p-4 border rounded-lg shadow-sm bg-white">
         <div class="grid grid-cols-4 gap-4">
           <div>
-            <span class="font-semibold text-gray-700">Component No</span>
+            <span class="font-semibold text-gray-700" data-translate="home.card.component_no">Component No</span>
             <div class="text-gray-800">{{ c.component_no }}</div>
           </div>
           <div>
-            <span class="font-semibold text-gray-700">Component Name</span>
+            <span class="font-semibold text-gray-700" data-translate="home.card.component_name">Component Name</span>
             <div class="text-gray-800">{{ c.component_name }}</div>
           </div>
           <div>
-            <span class="font-semibold text-gray-700">Reason</span>
+            <span class="font-semibold text-gray-700" data-translate="home.card.reason">Reason</span>
             <div class="text-gray-800">{{ c.reason }}</div>
           </div>
           <div>
-            <span class="font-semibold text-gray-700">Priority</span>
+            <span class="font-semibold text-gray-700" data-translate="home.card.priority">Priority</span>
             <div class="text-gray-800">{{ c.priority }}</div>
           </div>
         </div>
         {% if c.description %}
           <div class="mt-2 text-gray-600 italic">
-            <span class="font-semibold">Description:</span> {{ c.description }}
+            <span class="font-semibold" data-translate="home.card.description">Description:</span> {{ c.description }}
           </div>
         {% endif %}
       </div>

@@ -27,13 +27,20 @@
     "home": {
       "title": "Problem Reports",
       "new_report": "+ New Report",
+      "button": "Change View",
       "columns": {
-        "df_number": "DF Number",
+        "df_file": "DF File",
         "project": "Project",
         "manager": "Manager",
+        "customer": "Customer",
+        "Engineer": "Engineer"
+      },
+      "card": {
+        "component_no": "Component No",
+        "component_name": "Component Name",
         "reason": "Reason",
-        "status": "Status",
-        "actions": "Actions"
+        "priority": "Priority",
+        "description": "Description"
       },
       "feature_selector": {
         "button": "+ Add Columns",
@@ -193,22 +200,29 @@
       "loading": "Yükleniyor..."
     },
     "home": {
-      "title": "Sorun Raporları",
-      "new_report": "+ Yeni Rapor",
+      "title": "Problem Reports",
+      "new_report": "+ New Report",
+      "button": "Görünümü Değiştir",
       "columns": {
-        "df_number": "DF Numarası",
+        "df_file": "DF Dosyası",
         "project": "Proje",
-        "manager": "Proje Yöneticisi",
+        "manager": "Yönetici",
+        "customer": "Müşteri",
+        "Engineer": "Mühendis"
+      },
+      "card": {
+        "component_no": "Malzeme No",
+        "component_name": "Malzeme Adı",
         "reason": "Sebep",
-        "status": "Durum",
-        "actions": "İşlemler"
+        "priority": "Öncelik",
+        "description": "Açıklama"
       },
       "feature_selector": {
-        "button": "+ Sütun Ekle",
-        "title": "Özellikleri Seç",
-        "select_all": "Tümünü Seç",
-        "deselect_all": "Seçimi Kaldır",
-        "search": "Özelliklerde ara..."
+        "button": "+ Add Columns",
+        "title": "Select Features",
+        "select_all": "Select All",
+        "deselect_all": "Deselect All",
+        "search": "Search features..."
       }
     },
     "features": {

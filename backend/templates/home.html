@@ -10,11 +10,11 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-100">
             <tr>
-                <th class="px-6 py-3 text-left">DF File</th>
-                <th class="px-6 py-3 text-left">Project</th>
-                <th class="px-6 py-3 text-left">Manager</th>
-                <th class="px-6 py-3 text-left">Customer</th>
-                <th class="px-6 py-3 text-left">Engineer</th>
+                <th class="px-6 py-3 text-left" data-translate="home.columns.df_file">DF File</th>
+                <th class="px-6 py-3 text-left" data-translate="home.columns.project">Project</th>
+                <th class="px-6 py-3 text-left" data-translate="home.columns.manager">Manager</th>
+                <th class="px-6 py-3 text-left" data-translate="home.columns.customer">Customer</th>
+                <th class="px-6 py-3 text-left" data-translate="home.columns.engineer">Engineer</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -31,7 +31,8 @@
 
                     <!-- Toggle Button -->
                     <button class="mb-3 px-3 py-1  flex items-end justify-end text-white bg-orange-500 rounded hover:bg-orange-600"
-                            onclick="toggleView('{{ p.problem_id }}')">
+                            onclick="toggleView('{{ p.problem_id }}')"
+                            data-translate="home.button">
                     Toggle View
                     </button>
 

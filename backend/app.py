@@ -19,25 +19,6 @@ app = Flask(__name__)
 
 
 
-# @app.route("/summarize", methods=["POST"])
-# def summarize():
-#     data = request.get_json()
-#     query = data.get("query")
-
-#     api_url = "https://api.nlpcloud.io/v1/bart-large-cnn/summarize"
-#     headers = {
-#         "Authorization": "Bearer YOUR_API_KEY",
-#         "Content-Type": "application/json",
-#     }
-#     payload = {"text": query}
-
-#     response = requests.post(api_url, headers=headers, json=payload)
-#     summary = response.json().get("summary", "Sorry, I couldn't generate a summary.")
-
-#     return jsonify({"summary": summary})
-
-
-
 
 # serve files under static/files/uploads/<folder>/<...>
 @app.route('/static/files/uploads/<path:filename>')
