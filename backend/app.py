@@ -8,7 +8,7 @@ from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
 from flask import send_from_directory
 from flask import request, jsonify
-from dropdowns import reasons, department, action, priority
+from dropdowns import reasons, department, action, priority, status, smth  # these are just for getting the dropdown lists
 import requests
 import re
 from collections import defaultdict
@@ -205,6 +205,8 @@ def upload():
     dropdown_priority = priority
     dropdown_department = department
     dropdown_action = action
+    dropdown_status = status
+    dropdown_smth = smth
 
     t = get_translations()
 
@@ -225,6 +227,8 @@ def upload():
             actions = form.getlist("action[]") or form.getlist("action")
             priorities = form.getlist("priority[]") or form.getlist("priority")
             descriptions = form.getlist("description[]") or form.getlist("description")
+            status = form.getlist("status[]") or form.getlist("status")
+            smth = form.getlist("smth[]") or form.getlist("smth")
 
             n = len(arr_component_ids)
             items = []
@@ -235,7 +239,9 @@ def upload():
                     "department": departments[i] if i < len(departments) else None,
                     "action": actions[i] if i < len(actions) else None,
                     "priority": priorities[i] if i < len(priorities) else None,
-                    "description": descriptions[i] if i < len(descriptions) else None
+                    "description": descriptions[i] if i < len(descriptions) else None,
+                    "status": status[i] if i < len(status) else None,
+                    "smth": smth[i] if i < len(smth) else None
                 })
             return items
 
@@ -334,8 +340,10 @@ def upload():
         reasons=reasons,
         department=department,
         action=action,
+        status = status,
         priority=priority,
-        t=t
+        t=t,
+        smth=smth
     )
 
 

@@ -20,4 +20,129 @@
     <span class="font-semibold">Description:</span>
     {{ project.description or "—" }}
   </p>
+
+  <div>
+            <label class="block text-sm font-medium mb-2">Upload Photos (max 6)</label>
+            <div id="imagePreview" class="flex flex-wrap gap-4">
+                <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <span class="text-3xl text-gray-400">+</span>
+                    <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
+                </label>
+            </div>
+        </div>
 </div>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    let componentIndex = 1;
+    const maxImages = 6;
+    let filesArray = [];
+
+    // Elements
+    const addComponentBtn = document.getElementById('addComponentBtn');
+    const componentsContainer = document.getElementById('componentsContainer');
+    const photoInput = document.getElementById('photoInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const projectSelect = document.getElementById('project_select');
+    const groupSelect = document.getElementById('group_select');
+
+    const projectNameInput = document.getElementById('project_name');
+    const customerInput = document.getElementById('customer');
+    const managerInput = document.getElementById('manager');
+    const groupNameInput = document.getElementById('group_name');
+
+    const projectsData = {{ data.projects | tojson }};
+    const groupsData = {{ data.groups | tojson }};
+
+    // Add Component Row
+    addComponentBtn?.addEventListener('click', () => {
+        const template = componentsContainer.querySelector('.component-row');
+        if (!template) return;
+
+        const clone = template.cloneNode(true);
+
+        clone.querySelectorAll('select, textarea').forEach(el => {
+            el.name = el.name.replace(/\d+/, componentIndex);
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            if (el.tagName === 'TEXTAREA') el.value = '';
+        });
+
+        clone.querySelector('.remove-component').addEventListener('click', () => clone.remove());
+        componentsContainer.appendChild(clone);
+
+        componentIndex++;
+    });
+
+    // Image Preview
+    photoInput?.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (filesArray.length + files.length > maxImages) {
+            alert(`You can only upload up to ${maxImages} images.`);
+            return;
+        }
+
+        files.forEach(file => {
+            filesArray.push(file);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'relative w-24 h-24';
+
+                imgContainer.innerHTML = `
+                    <img src="${event.target.result}" class="w-full h-full object-cover rounded-lg shadow" />
+                    <button class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6">×</button>
+                `;
+
+                imgContainer.querySelector('button').addEventListener('click', () => {
+                    filesArray = filesArray.filter(f => f !== file);
+                    imgContainer.remove();
+                });
+
+                imagePreview.prepend(imgContainer);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // Project Selection Logic
+    projectSelect?.addEventListener('change', () => {
+        const pid = projectSelect.value;
+        const proj = projectsData.find(p => p.id == pid);
+
+        projectNameInput.value = proj?.project_name || '';
+        customerInput.value = proj?.customer_name || '';
+        managerInput.value = proj?.manager_name || '';
+
+        groupSelect.querySelectorAll('option').forEach(opt => {
+            opt.style.display = opt.value && opt.dataset.project == pid ? "block" : "none";
+        });
+        groupSelect.value = "";
+        groupNameInput.value = "";
+    });
+
+    // Group Selection Logic
+    groupSelect?.addEventListener('change', () => {
+        const gid = groupSelect.value;
+        const group = groupsData.find(g => g.id == gid);
+        groupNameInput.value = group?.group_name || '';
+    });
+});
+</script>
+
+{% for component in project.components %}
+  <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+    <!-- ...existing component info... -->
+
+    {% if component.photos %}
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+        {% for photo in component.photos %}
+          <img src="{{ url_for('static', filename='files/uploads/' ~ component.photo_folder ~ '/' ~ photo) }}"
+               class="rounded-lg shadow object-cover w-full h-24" alt="Component Photo">
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endfor %}

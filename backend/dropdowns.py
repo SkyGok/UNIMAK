@@ -23,11 +23,31 @@ department = [
     {"key": "department.international_assembly_mechanics", "default": "International Assembly Mechanics"}
 ]
 
+status = [
+    {"key": "status.design", "default": "Design"},
+    {"key": "status.method", "default": "Method"},
+    {"key": "status.purchase", "default": "Purchase"},
+    {"key": "status.manufacturing", "default": "Manufacturing"},
+    {"key": "status.warehouse", "default": "Warehouse"},
+    {"key": "status.shipment_and_packing", "default": "Shipment And Packing"},
+    {"key": "status.shipment", "default": "Shipment"},
+    {"key": "status.on_the_spot_action", "default": "On the Spot Action"},
+    {"key": "status.finished", "default": "Finished"},
+    {"key": "status.cancel", "default": "Cancel"},
+    {"key": "status.waiting", "default": "Waiting"}
+]
+
 action = [
     {"key": "action.1", "default": "Send Parts"},
     {"key": "action.2", "default": "Fix On-spot"},
     {"key": "action.3", "default": "Customer Support"},
     {"key": "action.4", "default": "Software Revision"}
+]
+
+smth = [
+    {"key": "action.1", "default": "MIF"},
+    {"key": "action.2", "default": "BOM"},
+    {"key": "action.3", "default": "Servis"}
 ]
 
 priority = [

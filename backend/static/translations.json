@@ -259,6 +259,8 @@
       "title": "DF Raporu",
       "project_number": "Proje Numarası",
       "work_order": "İş Emri",
+      "group_no": "Grup Numarası",
+      "group_name": "Grup Adı",
       "unit": "Birim",
       "part_name": "Parça Adı",
       "project_name": "Proje Adı",
@@ -301,6 +303,19 @@
       "international_assembly_electronics": "Uluslararası Montaj (Elektronik)",
       "international_assembly_mechanics": "Uluslararası Montaj (Mekanik)"
     },
+    "status": {
+      "design": "Tasarım Aşamasında",
+      "method": "Metod Aşamasında",
+      "purchase": "Satın Alma Aşamasında",
+      "manufacturing": "Üretim Aşamasında",
+      "warehouse": "Depo Paketleme Aşamasında",
+      "shipment_and_packaging": "Sevkiyat ve Paketleme Aşamasında",
+      "shipment": "Sevkiyat Aşamasında",
+      "on_the_spot_action": "Yerinde Aksiyon Aşamasında",
+      "finished": "Tamamlandı",
+      "cancel": "İptal",
+      "waiting": "Beklemede"
+    },
     "action": {
       "1": "Malzeme Gönderimi",
       "2": "Yerinde Düzeltme",
@@ -336,11 +351,6 @@
       "confirm_password": "Şifre (Tekrar)",
       "login": "Giriş Yap",
       "register": "Kayıt Ol"
-    },
-    "status": {
-      "completed": "Tamamlandı",
-      "pending": "Beklemede",
-      "issue": "Sorun"
     },
     "flash": {
       "report_created": "Sorun raporu başarıyla oluşturuldu!",
