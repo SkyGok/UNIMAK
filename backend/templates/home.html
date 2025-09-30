@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block main %}
+
 <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-100">
@@ -27,10 +28,28 @@
             </tr>
             <tr id="details-{{ p.problem_id }}" class="hidden">
                 <td colspan="6" class="p-4 bg-gray-50">
+
+                    <!-- Toggle Button -->
+                    <button class="mb-3 px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600"
+                            onclick="toggleView('{{ p.problem_id }}')">
+                    Toggle View
+                    </button>
+
+                    <!-- Card View (default visible) -->
+                    <div id="card-view-{{ p.problem_id }}">
                     {% include "partials/card_view.html" %}
+                    </div>
+
+                    <!-- Table View (hidden initially) -->
+                    <div id="table-view-{{ p.problem_id }}" class="hidden">
+                    {% include "partials/card_view_table.html" %}
+                    </div>
+
                 </td>
-            </tr>
+                </tr>
+            
             {% endfor %}
+            
         </tbody>
     </table>
 </div>
@@ -41,6 +60,20 @@ function openDetails(id) {
     row.classList.toggle("hidden");
 }
 </script>
+<script>
+function openDetails(id) {
+    let row = document.getElementById("details-" + id);
+    row.classList.toggle("hidden");
+}
+
+function toggleView(id) {
+    const card = document.getElementById("card-view-" + id);
+    const table = document.getElementById("table-view-" + id);
+    card.classList.toggle("hidden");
+    table.classList.toggle("hidden");
+}
+</script>
+
 
 
 {% endblock %}

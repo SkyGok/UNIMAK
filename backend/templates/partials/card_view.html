@@ -1,6 +1,8 @@
 {# partials/card_view.html #}
 <div class="space-y-4">
+  {% set seen = "" %}
   {% for c in p.components %}
+
     <div class="p-4 border rounded-lg shadow-sm bg-white">
       <div class="grid grid-cols-4 gap-4">
         <div>
