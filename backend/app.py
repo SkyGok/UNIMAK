@@ -142,7 +142,8 @@ def index():
                 prob["photos"] = os.listdir(pictures_dir)
 
     data = list(problem_dict.values())
-    return render_template("home.html", data=data)
+    t = get_translations()
+    return render_template("home.html", data=data, t=t)
 
 
 # -------------------- LOGIN --------------------
