@@ -11,19 +11,19 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-200">
-      {% set seen = "" %}
-      {% for c in p.components %}
-        {% if seen.find(c.component_no ~ "-" ~ c.reason) == -1 %}
-          {% set seen = seen + c.component_no ~ "-" ~ c.reason ~ "," %}
-          <tr>
+    {% set ns = namespace(seen="") %}
+    {% for c in p.components %}
+        {% if ns.seen.find(c.component_no ~ "-" ~ c.reason) == -1 %}
+        {% set ns.seen = ns.seen + c.component_no ~ "-" ~ c.reason ~ "," %}
+        <tr>
             <td class="px-4 py-2">{{ c.component_no }}</td>
             <td class="px-4 py-2">{{ c.component_name }}</td>
             <td class="px-4 py-2">{{ c.reason }}</td>
             <td class="px-4 py-2">{{ c.priority }}</td>
             <td class="px-4 py-2 italic">{{ c.description or "-" }}</td>
-          </tr>
+        </tr>
         {% endif %}
-      {% endfor %}
+    {% endfor %}
     </tbody>
   </table>
 </div>

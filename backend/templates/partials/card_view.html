@@ -1,33 +1,35 @@
 {# partials/card_view.html #}
 <div class="space-y-4">
-  {% set seen = "" %}
+  {% set ns = namespace(seen="") %}
   {% for c in p.components %}
-
-    <div class="p-4 border rounded-lg shadow-sm bg-white">
-      <div class="grid grid-cols-4 gap-4">
-        <div>
-          <span class="font-semibold text-gray-700">Component No</span>
-          <div class="text-gray-800">{{ c.component_no }}</div>
+    {% if ns.seen.find(c.component_no ~ "-" ~ c.reason) == -1 %}
+      {% set ns.seen = ns.seen + c.component_no ~ "-" ~ c.reason ~ "," %}
+      <div class="p-4 border rounded-lg shadow-sm bg-white">
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <span class="font-semibold text-gray-700">Component No</span>
+            <div class="text-gray-800">{{ c.component_no }}</div>
+          </div>
+          <div>
+            <span class="font-semibold text-gray-700">Component Name</span>
+            <div class="text-gray-800">{{ c.component_name }}</div>
+          </div>
+          <div>
+            <span class="font-semibold text-gray-700">Reason</span>
+            <div class="text-gray-800">{{ c.reason }}</div>
+          </div>
+          <div>
+            <span class="font-semibold text-gray-700">Priority</span>
+            <div class="text-gray-800">{{ c.priority }}</div>
+          </div>
         </div>
-        <div>
-          <span class="font-semibold text-gray-700">Component Name</span>
-          <div class="text-gray-800">{{ c.component_name }}</div>
-        </div>
-        <div>
-          <span class="font-semibold text-gray-700">Reason</span>
-          <div class="text-gray-800">{{ c.reason }}</div>
-        </div>
-        <div>
-          <span class="font-semibold text-gray-700">Priority</span>
-          <div class="text-gray-800">{{ c.priority }}</div>
-        </div>
+        {% if c.description %}
+          <div class="mt-2 text-gray-600 italic">
+            <span class="font-semibold">Description:</span> {{ c.description }}
+          </div>
+        {% endif %}
       </div>
-      {% if c.description %}
-        <div class="mt-2 text-gray-600 italic">
-          <span class="font-semibold">Description:</span> {{ c.description }}
-        </div>
-      {% endif %}
-    </div>
+    {% endif %}
   {% endfor %}
 
   {% if p.photos %}
