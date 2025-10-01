@@ -50,6 +50,15 @@ smth = [
     {"key": "action.3", "default": "Servis"}
 ]
 
+
+talep = [
+    {"key": "action.1", "default": "A"},
+    {"key": "action.2", "default": "B"},
+    {"key": "action.3", "default": "C"}
+]
+
+
+
 priority = [
     {"key": "priority.low", "default": "Low"},
     {"key": "priority.normal", "default": "Normal"},

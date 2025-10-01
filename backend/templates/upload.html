@@ -72,7 +72,11 @@
         <!-- The one who knocks -->
             <div class="mt-4">
                 <label class="block text-sm font-medium">Talep Eden</label>
-                <textarea name="components[0][description]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
+                <select name="components[0][action]" class="w-full border rounded px-3 py-2">
+                    {% for t in talep %}
+                        <option value="{{ t.key }}">{{ t.default }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
         <!-- Components -->
@@ -149,7 +153,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="mt-4">
                         <label class="block text-sm font-medium">Adet</label>
-                        <textarea name="components[0][description]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
+                        <textarea name="components[0][description]" 
+                        rows="3" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"></textarea>
                     </div>
                     <div class="mt-4">
                         <label class="block text-sm font-medium">Birim</label>

@@ -1,46 +1,117 @@
 {% extends "layout.html" %}
 
-{% block title %}
-    Home
-{% endblock %}
+{% block title %}Admin – Problem Reports{% endblock %}
 
 {% block main %}
+
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Problem Reports – Admin Panel</h1>
+    <a href="/" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">Back to Home</a>
+</div>
+
 <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <table class="min-w-full text-sm divide-y divide-gray-200">
         <thead class="bg-gray-100">
             <tr>
-                <th class="px-6 py-3 text-left">DF File</th>
-                <th class="px-6 py-3 text-left">Project</th>
-                <th class="px-6 py-3 text-left">Manager</th>
-                <th class="px-6 py-3 text-left">Customer</th>
-                <th class="px-6 py-3 text-left">Engineer</th>
+                <th class="px-4 py-2">ID</th>
+                <th class="px-4 py-2">Project</th>
+                <th class="px-4 py-2">Group</th>
+                <th class="px-4 py-2">Reported By</th>
+                <th class="px-4 py-2">Created At</th>
+                <th class="px-4 py-2">Planned Close Date</th>
+                <th class="px-4 py-2 text-right">Actions</th>
             </tr>
         </thead>
+
         <tbody class="divide-y divide-gray-200">
-            {% for p in data %}
-            <tr onclick="openDetails('{{ p.problem_id }}')" class="hover:bg-gray-300">
-                <td class="px-6 py-4 font-medium">{{ p.df_filename }}</td>
-                <td class="px-6 py-4">{{ p.project_number }} - {{ p.project_name }}</td>
-                <td class="px-6 py-4">{{ p.manager_name }}</td>
-                <td class="px-6 py-4">{{ p.customer_name }}</td>
-                <td class="px-6 py-4">{{ p.engineer_name }}</td>
-            </tr>
-            <tr id="details-{{ p.problem_id }}" class="hidden">
-                <td colspan="6" class="p-4 bg-gray-50">
-                    {% include "partials/card_view.html" %}
+            {% for p in reports %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2 font-medium">{{ p.id }}</td>
+                <td class="px-4 py-2">{{ p.project_number }} - {{ p.project_name }}</td>
+                <td class="px-4 py-2">{{ p.group_name }}</td>
+                <td class="px-4 py-2">{{ p.username }}</td>
+                <td class="px-4 py-2">{{ p.created_at }}</td>
+                <td class="px-4 py-2">
+                    <input type="date" value="{{ p.planned_closing_date }}" class="border p-1 rounded">
+                </td>
+                <td class="px-4 py-2 flex gap-2 justify-end">
+                    <button onclick="toggleDetails('{{ p.id }}')" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Details</button>
+                    <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
                 </td>
             </tr>
+
+            <!-- Expanded Details -->
+            <tr id="details-{{ p.id }}" class="hidden bg-gray-50">
+                <td colspan="7" class="p-4">
+
+                    <!-- COMPONENTS SECTION -->
+                    <h3 class="font-semibold mb-2">Components</h3>
+                    <table class="w-full text-sm mb-4 border">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-2 py-1">Component</th>
+                                <th class="px-2 py-1">Reason</th>
+                                <th class="px-2 py-1">Priority</th>
+                                <th class="px-2 py-1">Department</th>
+                                <th class="px-2 py-1">Action</th>
+                                <th class="px-2 py-1 text-right">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in p.components %}
+                            <tr class="border-t">
+                                <td class="px-2 py-1">{{ c.component_name }}</td>
+                                <td class="px-2 py-1">{{ c.reason }}</td>
+                                <td class="px-2 py-1">{{ c.priority }}</td>
+                                <td class="px-2 py-1">{{ c.department }}</td>
+                                <td class="px-2 py-1">{{ c.action }}</td>
+                                <td class="px-2 py-1 text-right">
+                                    <button class="text-red-500 hover:underline">Delete</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- STEPS SECTION -->
+                    <h3 class="font-semibold mb-2">Steps</h3>
+                    <table class="w-full text-sm border">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-2 py-1">Step #</th>
+                                <th class="px-2 py-1">File</th>
+                                <th class="px-2 py-1">Status</th>
+                                <th class="px-2 py-1">Action</th>
+                                <th class="px-2 py-1 text-right">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in p.steps %}
+                            <tr class="border-t">
+                                <td class="px-2 py-1">{{ s.step_number }}</td>
+                                <td class="px-2 py-1">{{ s.df_filename }}</td>
+                                <td class="px-2 py-1">{{ s.status }}</td>
+                                <td class="px-2 py-1">{{ s.action }}</td>
+                                <td class="px-2 py-1 text-right">
+                                    <button class="text-red-500 hover:underline">Delete</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                </td>
+            </tr>
+
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 <script>
-function openDetails(id) {
-    let row = document.getElementById("details-" + id);
-    row.classList.toggle("hidden");
+function toggleDetails(id) {
+    document.getElementById("details-" + id).classList.toggle("hidden");
 }
 </script>
-
 
 {% endblock %}

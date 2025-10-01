@@ -8,7 +8,7 @@ from datetime import datetime
 from helpers import apology, login_required, lookup, get_translations
 from flask import send_from_directory
 from flask import request, jsonify
-from dropdowns import reasons, department, action, priority, status, smth  # these are just for getting the dropdown lists
+from dropdowns import reasons, department, action, priority, status, smth, talep  # these are just for getting the dropdown lists
 import requests
 import re
 from collections import defaultdict
@@ -207,6 +207,7 @@ def upload():
     dropdown_action = action
     dropdown_status = status
     dropdown_smth = smth
+    dropdown_talep = talep
 
     t = get_translations()
 
@@ -241,7 +242,8 @@ def upload():
                     "priority": priorities[i] if i < len(priorities) else None,
                     "description": descriptions[i] if i < len(descriptions) else None,
                     "status": status[i] if i < len(status) else None,
-                    "smth": smth[i] if i < len(smth) else None
+                    "smth": smth[i] if i < len(smth) else None,
+                    "talep": talep[i] if i < len(talep) else None
                 })
             return items
 
@@ -343,7 +345,8 @@ def upload():
         status = status,
         priority=priority,
         t=t,
-        smth=smth
+        smth=smth,
+        talep=talep
     )
 
 
@@ -443,12 +446,78 @@ def history():
     return render_template("history.html", data=rows, t=t)
 
 # -------------------- ADMIN --------------------
+
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    # need to create them admin features
-    # and then I'll continue on newFeatures branch for this.  This shall stay as it is....
-    return render_template("admin.html")
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "delete_problem":
+            pid = request.form.get("problem_id")
+            db.execute("DELETE FROM problems WHERE id = ?", pid)
+            flash(f"Problem {pid} deleted.", "success")
+
+        elif action == "update_date":
+            pid = request.form.get("problem_id")
+            new_date = request.form.get("planned_closing_date")
+            db.execute(
+                "UPDATE problems SET planned_closing_date = ? WHERE id = ?",
+                new_date, pid
+            )
+            flash(f"Updated closing date for Problem {pid}.", "success")
+
+        elif action == "delete_component":
+            cid = request.form.get("component_id")
+            db.execute("DELETE FROM problem_components WHERE id = ?", cid)
+            flash(f"Component {cid} deleted.", "success")
+
+        elif action == "delete_step":
+            sid = request.form.get("step_id")
+            db.execute("DELETE FROM problem_steps WHERE id = ?", sid)
+            flash(f"Step {sid} deleted.", "success")
+
+        return redirect("/admin")
+
+    # --- GET: Load problem reports ---
+    problems = db.execute("""
+        SELECT p.id, p.created_at, p.planned_closing_date,
+               pr.project_number, pr.project_name,
+               g.group_name,
+               u.username
+        FROM problems p
+        JOIN projects pr ON p.project_id = pr.id
+        JOIN groups g ON p.group_id = g.id
+        JOIN users u ON p.user_id = u.id
+        ORDER BY p.created_at DESC
+    """)
+
+    reports = []
+    for prob in problems:
+        components = db.execute("""
+            SELECT pc.id, c.component_name, pc.reason, pc.priority,
+                   pc.department, pc.action
+            FROM problem_components pc
+            JOIN components c ON pc.component_id = c.id
+            WHERE pc.problem_id = ?
+        """, prob["id"])
+
+        steps = db.execute("""
+            SELECT id, step_number, df_filename, status, action
+            FROM problem_steps
+            WHERE problem_id = ?
+            ORDER BY step_number
+        """, prob["id"])
+
+        reports.append({
+            **prob,
+            "components": components,
+            "steps": steps
+        })
+
+    return render_template("admin.html", reports=reports)
+
+
 
 
 # -------------------- RUN APP --------------------
