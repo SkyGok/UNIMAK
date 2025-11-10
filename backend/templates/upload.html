@@ -95,7 +95,7 @@
                     </select>
                     <div>
                         <label class="block mb-2 font-medium">Component Name</label>
-                        <input type="text" id="group_name" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+                        <input type="text" class="component_name w-full border rounded px-3 py-2 bg-gray-100" readonly>
                     </div>
                 </div>
 
@@ -236,6 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupNameInput = document.getElementById('group_name');
 
     const projectsData = {{ data.projects | tojson }};
+    const componentsData = {{ data.components | tojson }};
     const groupsData = {{ data.groups | tojson }};
 
     // Add Component Row
@@ -264,6 +265,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         componentIndex++;
     });
+    // Component selection logic
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('component_select')) {
+            const select = e.target;
+            const selectedId = select.value;
+            const row = select.closest('.component-row');
+            const nameInput = row.querySelector('.component_name');
+
+            const selectedComponent = componentsData.find(c => c.id == selectedId);
+            nameInput.value = selectedComponent ? selectedComponent.component_name : '';
+        }
+    });
+
 
     // Image Preview
     photoInput?.addEventListener('change', (e) => {
@@ -319,6 +333,32 @@ document.addEventListener("DOMContentLoaded", () => {
         const group = groupsData.find(g => g.id == gid);
         groupNameInput.value = group?.group_name || '';
     });
+
+    // Group Selection Logic (updated)
+    groupSelect?.addEventListener('change', () => {
+        const gid = groupSelect.value;
+        const group = groupsData.find(g => g.id == gid);
+        groupNameInput.value = group?.group_name || '';
+
+        // Filter component dropdowns
+        const componentSelects = document.querySelectorAll('.component_select');
+        componentSelects.forEach(select => {
+            // Clear current options
+            select.innerHTML = '<option value="">Select Component</option>';
+
+            // Filter by selected group_id
+            const filteredComponents = componentsData.filter(c => c.group_id == gid);
+
+            // Populate filtered options
+            filteredComponents.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.component_no;
+                select.appendChild(opt);
+            });
+        });
+    });
+
 });
 </script>
 

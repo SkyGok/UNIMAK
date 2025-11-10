@@ -1,0 +1,69 @@
+<!-- Admin Table View for Components and Steps -->
+<div class="space-y-6">
+
+    <!-- COMPONENTS TABLE -->
+    <div>
+        <h3 class="text-lg font-semibold mb-2">Components</h3>
+        <table class="min-w-full text-sm border divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-1 text-left">Component</th>
+                    <th class="px-3 py-1 text-left">Reason</th>
+                    <th class="px-3 py-1 text-left">Priority</th>
+                    <th class="px-3 py-1 text-left">Department</th>
+                    <th class="px-3 py-1 text-left">Action</th>
+                    <th class="px-3 py-1 text-right">Manage</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for c in p.components %}
+                <tr>
+                    <td class="px-3 py-1">{{ c.component_name }}</td>
+                    <td class="px-3 py-1">{{ c.reason }}</td>
+                    <td class="px-3 py-1">{{ c.priority }}</td>
+                    <td class="px-3 py-1">{{ c.department }}</td>
+                    <td class="px-3 py-1">{{ c.action }}</td>
+                    <td class="px-3 py-1 text-right">
+                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
+                        <button class="text-red-600 hover:underline">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- STEPS TABLE -->
+    <div>
+        <h3 class="text-lg font-semibold mb-2">Steps</h3>
+        <table class="min-w-full text-sm border divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-1 text-left">Step #</th>
+                    <th class="px-3 py-1 text-left">File</th>
+                    <th class="px-3 py-1 text-left">Status</th>
+                    <th class="px-3 py-1 text-left">Action</th>
+                    <th class="px-3 py-1 text-left">Planned Close</th>
+                    <th class="px-3 py-1 text-right">Manage</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for s in p.steps %}
+                <tr>
+                    <td class="px-3 py-1">{{ s.step_number }}</td>
+                    <td class="px-3 py-1">{{ s.df_filename }}</td>
+                    <td class="px-3 py-1">{{ s.status }}</td>
+                    <td class="px-3 py-1">{{ s.action }}</td>
+                    <td class="px-3 py-1">{{ s.planned_closing_date }}</td>
+                    <td class="px-3 py-1 text-right">
+                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
+                        <button class="text-red-600 hover:underline">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+z

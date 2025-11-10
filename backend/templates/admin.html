@@ -10,107 +10,68 @@
 </div>
 
 <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-    <table class="min-w-full text-sm divide-y divide-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-100">
             <tr>
-                <th class="px-4 py-2">ID</th>
-                <th class="px-4 py-2">Project</th>
-                <th class="px-4 py-2">Group</th>
-                <th class="px-4 py-2">Reported By</th>
-                <th class="px-4 py-2">Created At</th>
-                <th class="px-4 py-2">Planned Close Date</th>
-                <th class="px-4 py-2 text-right">Actions</th>
+                <th class="px-6 py-3 text-left">ID</th>
+                <th class="px-6 py-3 text-left">Project</th>
+                <th class="px-6 py-3 text-left">Group</th>
+                <th class="px-6 py-3 text-left">Reported By</th>
+                <th class="px-6 py-3 text-left">Created At</th>
+                <th class="px-6 py-3 text-left">Planned Close Date</th>
             </tr>
         </thead>
-
         <tbody class="divide-y divide-gray-200">
             {% for p in reports %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2 font-medium">{{ p.id }}</td>
-                <td class="px-4 py-2">{{ p.project_number }} - {{ p.project_name }}</td>
-                <td class="px-4 py-2">{{ p.group_name }}</td>
-                <td class="px-4 py-2">{{ p.username }}</td>
-                <td class="px-4 py-2">{{ p.created_at }}</td>
-                <td class="px-4 py-2">
+            <tr onclick="openDetails('{{ p.problem_id }}')" class="hover:bg-gray-300">
+                <td class="px-6 py-4 font-medium">{{ p.id }}</td>
+                <td class="px-6 py-4">{{ p.project_number }} - {{ p.project_name }}</td>
+                <td class="px-6 py-4">{{ p.group_name }}</td>
+                <td class="px-6 py-4">{{ p.username }}</td>
+                <td class="px-6 py-4">{{ p.created_at }}</td>
+                <td class="px-6 py-4">
                     <input type="date" value="{{ p.planned_closing_date }}" class="border p-1 rounded">
-                </td>
-                <td class="px-4 py-2 flex gap-2 justify-end">
-                    <button onclick="toggleDetails('{{ p.id }}')" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Details</button>
-                    <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
                 </td>
             </tr>
 
             <!-- Expanded Details -->
-            <tr id="details-{{ p.id }}" class="hidden bg-gray-50">
-                <td colspan="7" class="p-4">
+            <tr id="details-{{ p.problem_id }}" class="hidden">
+                <td colspan="7" class="p-4 bg-gray-50">
 
-                    <!-- COMPONENTS SECTION -->
-                    <h3 class="font-semibold mb-2">Components</h3>
-                    <table class="w-full text-sm mb-4 border">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="px-2 py-1">Component</th>
-                                <th class="px-2 py-1">Reason</th>
-                                <th class="px-2 py-1">Priority</th>
-                                <th class="px-2 py-1">Department</th>
-                                <th class="px-2 py-1">Action</th>
-                                <th class="px-2 py-1 text-right">Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for c in p.components %}
-                            <tr class="border-t">
-                                <td class="px-2 py-1">{{ c.component_name }}</td>
-                                <td class="px-2 py-1">{{ c.reason }}</td>
-                                <td class="px-2 py-1">{{ c.priority }}</td>
-                                <td class="px-2 py-1">{{ c.department }}</td>
-                                <td class="px-2 py-1">{{ c.action }}</td>
-                                <td class="px-2 py-1 text-right">
-                                    <button class="text-red-500 hover:underline">Delete</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <!-- Toggle Button -->
+                    <button class="mb-3 px-3 py-1 flex items-end justify-end text-white bg-orange-500 rounded hover:bg-orange-600"
+                            onclick="toggleView('{{ p.problem_id }}')">
+                        Toggle View
+                    </button>
 
-                    <!-- STEPS SECTION -->
-                    <h3 class="font-semibold mb-2">Steps</h3>
-                    <table class="w-full text-sm border">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="px-2 py-1">Step #</th>
-                                <th class="px-2 py-1">File</th>
-                                <th class="px-2 py-1">Status</th>
-                                <th class="px-2 py-1">Action</th>
-                                <th class="px-2 py-1 text-right">Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for s in p.steps %}
-                            <tr class="border-t">
-                                <td class="px-2 py-1">{{ s.step_number }}</td>
-                                <td class="px-2 py-1">{{ s.df_filename }}</td>
-                                <td class="px-2 py-1">{{ s.status }}</td>
-                                <td class="px-2 py-1">{{ s.action }}</td>
-                                <td class="px-2 py-1 text-right">
-                                    <button class="text-red-500 hover:underline">Delete</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <!-- Card View -->
+                    <div id="card-view-{{ p.problem_id }}">
+                        {% include "partials/admin_card_view.html" %}
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="table-view-{{ p.problem_id }}" class="hidden">
+                        {% include "partials/admin_table_view.html" %}
+                    </div>
 
                 </td>
             </tr>
-
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 <script>
-function toggleDetails(id) {
-    document.getElementById("details-" + id).classList.toggle("hidden");
+function openDetails(id) {
+    let row = document.getElementById("details-" + id);
+    row.classList.toggle("hidden");
+}
+
+function toggleView(id) {
+    const card = document.getElementById("card-view-" + id);
+    const table = document.getElementById("table-view-" + id);
+    card.classList.toggle("hidden");
+    table.classList.toggle("hidden");
 }
 </script>
 
