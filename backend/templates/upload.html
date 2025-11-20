@@ -179,12 +179,12 @@
                 
 
                 <!-- Component Photos -->
-                <div>
-                     <label class="block text-sm font-medium mb-2">Upload Photos (max 6)</label>
-                    <div id="imagePreview" class="flex flex-wrap gap-4">
+                <div class="mt-4">
+                    <label class="block text-sm font-medium mb-2">Upload Photos for this Component (max 6)</label>
+                    <div class="component-photos-preview flex flex-wrap gap-4" data-component-index="0">
                         <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                             <span class="text-3xl text-gray-400">+</span>
-                            <input type="file" name="photos" accept="image/*" class="hidden" multiple id="photoInput">
+                            <input type="file" name="components[0][photos]" accept="image/*" class="hidden component-photo-input" multiple data-component-index="0">
                         </label>
                     </div>
                 </div>
@@ -225,8 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Elements
     const addComponentBtn = document.getElementById('addComponentBtn');
     const componentsContainer = document.getElementById('componentsContainer');
-    const photoInput = document.getElementById('photoInput');
-    const imagePreview = document.getElementById('imagePreview');
     const projectSelect = document.getElementById('project_select');
     const groupSelect = document.getElementById('group_select');
 
@@ -247,18 +245,34 @@ document.addEventListener("DOMContentLoaded", () => {
         const clone = template.cloneNode(true);
 
         clone.querySelectorAll('select, textarea, input[type="file"]').forEach(el => {
-            el.name = el.name.replace(/\d+/, componentIndex);
+            const oldName = el.name;
+            el.name = oldName.replace(/\[\d+\]/, `[${componentIndex}]`);
             if (el.tagName === 'SELECT') el.selectedIndex = 0;
             if (el.tagName === 'TEXTAREA') el.value = '';
-            if (el.type === 'file') el.value = '';
+            if (el.type === 'file') {
+                el.value = '';
+                if (el.classList.contains('component-photo-input')) {
+                    el.setAttribute('data-component-index', componentIndex);
+                }
+            }
         });
 
-        // Reset file inputs and previews
-        clone.querySelectorAll('input[type="file"]').forEach(input => {
-            input.value = '';
-            const previewContainer = input.closest('.component-row').querySelector('.component-image-preview');
-            previewContainer.innerHTML = '';
-        });
+        // Reset photo preview container
+        const photoPreview = clone.querySelector('.component-photos-preview');
+        if (photoPreview) {
+            photoPreview.setAttribute('data-component-index', componentIndex);
+            photoPreview.innerHTML = `
+                <label class="w-24 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <span class="text-3xl text-gray-400">+</span>
+                    <input type="file" name="components[${componentIndex}][photos]" accept="image/*" class="hidden component-photo-input" multiple data-component-index="${componentIndex}">
+                </label>
+            `;
+            // Add event listener to new photo input
+            const newPhotoInput = photoPreview.querySelector('.component-photo-input');
+            if (newPhotoInput) {
+                setupPhotoPreview(newPhotoInput, photoPreview);
+            }
+        }
 
         clone.querySelector('.remove-component').addEventListener('click', () => clone.remove());
         componentsContainer.appendChild(clone);
@@ -279,36 +293,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // Image Preview
-    photoInput?.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        if (filesArray.length + files.length > maxImages) {
-            alert(`You can only upload up to ${maxImages} images.`);
-            return;
-        }
+    // Setup photo preview for component photo inputs
+    function setupPhotoPreview(photoInput, previewContainer) {
+        photoInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            const existingPreviews = previewContainer.querySelectorAll('.photo-preview-item').length;
+            
+            if (existingPreviews + files.length > maxImages) {
+                alert(`You can only upload up to ${maxImages} images per component.`);
+                e.target.value = '';
+                return;
+            }
 
-        files.forEach(file => {
-            filesArray.push(file);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative w-24 h-24 photo-preview-item';
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imgContainer = document.createElement('div');
-                imgContainer.className = 'relative w-24 h-24';
+                    imgContainer.innerHTML = `
+                        <img src="${event.target.result}" class="w-full h-full object-cover rounded-lg shadow" />
+                        <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">×</button>
+                    `;
 
-                imgContainer.innerHTML = `
-                    <img src="${event.target.result}" class="w-full h-full object-cover rounded-lg shadow" />
-                    <button class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6">×</button>
-                `;
+                    imgContainer.querySelector('button').addEventListener('click', () => {
+                        imgContainer.remove();
+                        // Update file input
+                        const dt = new DataTransfer();
+                        const input = e.target;
+                        Array.from(input.files).forEach(f => {
+                            if (f !== file) dt.items.add(f);
+                        });
+                        input.files = dt.files;
+                    });
 
-                imgContainer.querySelector('button').addEventListener('click', () => {
-                    filesArray = filesArray.filter(f => f !== file);
-                    imgContainer.remove();
-                });
-
-                imagePreview.prepend(imgContainer);
-            };
-            reader.readAsDataURL(file);
+                    previewContainer.appendChild(imgContainer);
+                };
+                reader.readAsDataURL(file);
+            });
         });
+    }
+
+    // Setup photo previews for existing component rows
+    document.querySelectorAll('.component-photo-input').forEach(input => {
+        const previewContainer = input.closest('.component-photos-preview');
+        if (previewContainer) {
+            setupPhotoPreview(input, previewContainer);
+        }
     });
 
     // Project Selection Logic

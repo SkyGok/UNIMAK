@@ -87,7 +87,7 @@ def index():
         ORDER BY p.created_at DESC
     """)
 
-    problem_dict = defaultdict(lambda: {"components": [], "photos": []})
+    problem_dict = defaultdict(lambda: {"components": []})
 
     for row in problems:
         prob = problem_dict[row["problem_id"]]
@@ -105,23 +105,32 @@ def index():
         })
         if row["pc_id"]:
             prob["components"].append({
+                "pc_id": row["pc_id"],
                 "component_name": row["component_name"],
                 "component_no": row["component_no"],
                 "reason": row["reason"],
                 "description": row["description"],
                 "priority": row["priority"],
                 "action": row["action"],
-                "department": row["department"]
+                "department": row["department"],
+                "photos": []  # Will be populated below
             })
 
-    # Attach photos from filesystem
+    # Attach photos from filesystem per component
     base_path = os.path.join(app.root_path, "static/files/uploads")
     for prob in problem_dict.values():
         df_prefix = prob["df_filename"].split(".")[0] if prob["df_filename"] else None
         if df_prefix:
-            pictures_dir = os.path.join(base_path, df_prefix, "pictures")
-            if os.path.exists(pictures_dir):
-                prob["photos"] = os.listdir(pictures_dir)
+            problem_base_dir = os.path.join(base_path, df_prefix)
+            if os.path.exists(problem_base_dir):
+                # Look for component-specific photo folders
+                for comp in prob["components"]:
+                    component_photos_dir = os.path.join(problem_base_dir, f"component_{comp['pc_id']}", "pictures")
+                    if os.path.exists(component_photos_dir):
+                        comp["photos"] = [f for f in os.listdir(component_photos_dir) 
+                                         if os.path.isfile(os.path.join(component_photos_dir, f))]
+                    else:
+                        comp["photos"] = []
 
     data = list(problem_dict.values())
     t = get_translations()
@@ -273,24 +282,12 @@ def upload():
         # ---- parse components (robust) ----
         components_list = parse_components_from_form(request.form)
 
-        # ---- files ----
-        photos = request.files.getlist("photos")  # <input name="photos" multiple>
-
-        # ---- create df number and folders ----
+        # ---- create df number and base folder ----
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
         folder_name = df_number
         base_dir = os.path.join(app.static_folder, "files", "uploads", folder_name)
-        pictures_dir = os.path.join(base_dir, "pictures")
-        os.makedirs(pictures_dir, exist_ok=True)
-
-        saved_photo_filenames = []
-        for idx, photo in enumerate(photos, start=1):
-            if photo and photo.filename:
-                ext = os.path.splitext(photo.filename)[1] or ".jpg"
-                filename = secure_filename(f"{folder_name}_{idx}{ext}")
-                photo.save(os.path.join(pictures_dir, filename))
-                saved_photo_filenames.append(filename)
+        os.makedirs(base_dir, exist_ok=True)
 
         # ---- Insert main problems row using cs50.SQL execute (no cursor) ----
         db.execute("""
@@ -302,7 +299,7 @@ def upload():
         problem_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
 
         # ---- Insert problem_components and problem_steps per component ----
-        for comp in components_list:
+        for idx, comp in enumerate(components_list):
             comp_id = comp.get("component_id") or comp.get("component") or None
             reason_v = comp.get("reason")
             department_v = comp.get("department")
@@ -310,11 +307,27 @@ def upload():
             priority_v = comp.get("priority")
             description_v = comp.get("description")
 
+            # Insert problem_component
             db.execute("""
                 INSERT INTO problem_components
                 (problem_id, component_id, reason, department, action, priority, description)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, problem_id, comp_id, reason_v, department_v, action_v, priority_v, description_v)
+
+            # Get the inserted problem_component id
+            problem_component_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
+
+            # ---- Save photos for this component ----
+            component_photos = request.files.getlist(f"components[{idx}][photos]")
+            if component_photos and any(photo.filename for photo in component_photos):
+                component_pictures_dir = os.path.join(base_dir, f"component_{problem_component_id}", "pictures")
+                os.makedirs(component_pictures_dir, exist_ok=True)
+                
+                for photo_idx, photo in enumerate(component_photos, start=1):
+                    if photo and photo.filename:
+                        ext = os.path.splitext(photo.filename)[1] or ".jpg"
+                        filename = secure_filename(f"comp_{problem_component_id}_{photo_idx}{ext}")
+                        photo.save(os.path.join(component_pictures_dir, filename))
 
             # add initial step row for that component (adjust fields to your schema)
             db.execute("""

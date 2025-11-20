@@ -8,6 +8,7 @@
         <th class="px-4 py-2 text-left" data-translate="home.card.reason">Reason</th>
         <th class="px-4 py-2 text-left" data-translate="home.card.priority">Priority</th>
         <th class="px-4 py-2 text-left" data-translate="home.card.description">Description</th>
+        <th class="px-4 py-2 text-left">Photos</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-200">
@@ -21,18 +22,21 @@
             <td class="px-4 py-2">{{ c.reason }}</td>
             <td class="px-4 py-2">{{ c.priority }}</td>
             <td class="px-4 py-2 italic">{{ c.description or "-" }}</td>
+            <td class="px-4 py-2">
+              {% if c.photos and c.photos|length > 0 %}
+                <div class="grid grid-cols-2 gap-2">
+                  {% for photo in c.photos %}
+                    <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/component_' ~ c.pc_id ~ '/pictures/' ~ photo) }}" 
+                         class="rounded shadow object-cover w-20 h-20" alt="Component Photo">
+                  {% endfor %}
+                </div>
+              {% else %}
+                <span class="text-gray-400 text-xs">No photos</span>
+              {% endif %}
+            </td>
         </tr>
         {% endif %}
     {% endfor %}
     </tbody>
   </table>
 </div>
-
-{% if p.photos %}
-  <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-    {% for photo in p.photos %}
-      <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/pictures/' ~ photo) }}" 
-           class="rounded-lg shadow object-cover w-full h-48" alt="Problem Photo">
-    {% endfor %}
-  </div>
-{% endif %}
