@@ -26,6 +26,7 @@
             <div class="hidden md:flex md:items-center md:gap-6 ml-auto">
                 {% if session["user_id"] %}
                     <a href="/upload" class="hover:text-orange-600" data-translate="nav.upload">Upload</a>
+                    <a href="/admin" class="hover:text-orange-600">Admin</a>
                     <!-- <a href="/info" class="hover:text-orange-600" data-translate="nav.info">Info</a> -->
                     <!-- <a href="/history" class="hover:text-orange-600" data-translate="nav.history">History</a> -->
                     <a href="/logout" class="text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
@@ -56,6 +57,7 @@
         <div id="mobile-menu" class="hidden flex-col space-y-2 px-4 pb-4 md:hidden">
             {% if session["user_id"] %}
                 <a href="/upload" class="block hover:text-orange-500" data-translate="nav.upload">Upload</a>
+                <a href="/admin" class="block hover:text-orange-500">Admin</a>
                 <a href="/projects" class="block hover:text-orange-500" data-translate="nav.projects">Projects</a>
                 <a href="/history" class="block hover:text-orange-500" data-translate="nav.history">History</a>
                 <a href="/settings" class="block hover:text-orange-500" data-translate="nav.settings">Settings</a>
@@ -75,11 +77,24 @@
     </nav>
 
     <!-- Flash messages -->
-    {% if get_flashed_messages() %}
-        <div class="bg-orange-200 text-white text-center py-2">
-            {{ get_flashed_messages() | join(" ") }}
-        </div>
-    {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 pt-4">
+                {% for category, message in messages %}
+                    <div class="mb-3 p-4 rounded-lg shadow-md {% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-orange-100 border-l-4 border-orange-500 text-orange-700{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     <!-- Main content -->
     <main class="container mx-auto flex-1 p-6">

@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin – Manage Projects{% endblock %}
+
+{% block main %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Manage Projects</h1>
+        <div class="flex gap-3">
+            <a href="/admin" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                Problem Reports
+            </a>
+            <a href="/" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
+                Back to Home
+            </a>
+        </div>
+    </div>
+
+    <!-- Add Project Form -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Project</h2>
+        <form method="POST" action="/admin/projects" class="space-y-4">
+            <input type="hidden" name="action" value="add_project">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Project Number -->
+                <div>
+                    <label for="project_number" class="block text-sm font-medium text-gray-700 mb-1">
+                        Project Number <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="project_number" 
+                        name="project_number" 
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="e.g., PRJ-2024-001"
+                    >
+                </div>
+
+                <!-- Project Name -->
+                <div>
+                    <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Project Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="project_name" 
+                        name="project_name" 
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="e.g., Production Line Upgrade"
+                    >
+                </div>
+
+                <!-- Manager -->
+                <div>
+                    <label for="manager_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Manager <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                        id="manager_id" 
+                        name="manager_id" 
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                        <option value="">Select Manager</option>
+                        {% for manager in managers %}
+                            <option value="{{ manager.id }}">{{ manager.manager_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Customer -->
+                <div>
+                    <label for="customer_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Customer <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                        id="customer_id" 
+                        name="customer_id" 
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                        <option value="">Select Customer</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}">
+                                {{ customer.customer_name }} ({{ customer.customer_country }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                    <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
+                        Quantity <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="number" 
+                        id="quantity" 
+                        name="quantity" 
+                        required
+                        min="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="e.g., 100"
+                    >
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-2">
+                <button 
+                    type="submit" 
+                    class="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition"
+                >
+                    Add Project
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">All Projects</h2>
+            <p class="text-sm text-gray-600 mt-1">Total: {{ projects|length }} project(s)</p>
+        </div>
+
+        {% if projects %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Project Number
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Project Name
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Manager
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Customer
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Quantity
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Problems
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for project in projects %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ project.project_number }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">{{ project.project_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ project.manager_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ project.customer_name }}</div>
+                            <div class="text-xs text-gray-500">{{ project.customer_country }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ project.quantity }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if project.problem_count > 0 %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    {{ project.problem_count }}
+                                </span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    0
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <form method="POST" action="/admin/projects" class="inline" 
+                                  onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+                                <input type="hidden" name="action" value="delete_project">
+                                <input type="hidden" name="project_id" value="{{ project.id }}">
+                                <button 
+                                    type="submit" 
+                                    class="text-red-600 hover:text-red-900 focus:outline-none transition"
+                                    {% if project.problem_count > 0 %}disabled title="Cannot delete project with associated problems"{% endif %}
+                                >
+                                    {% if project.problem_count > 0 %}
+                                        <span class="opacity-50 cursor-not-allowed">Delete</span>
+                                    {% else %}
+                                        Delete
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No projects</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by adding a new project above.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Form validation feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action="/admin/projects"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const projectNumber = document.getElementById('project_number').value.trim();
+            const projectName = document.getElementById('project_name').value.trim();
+            
+            if (!projectNumber || !projectName) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}
+

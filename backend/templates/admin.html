@@ -1,77 +1,548 @@
 {% extends "layout.html" %}
 
-{% block title %}Admin – Problem Reports{% endblock %}
+{% block title %}Admin Panel{% endblock %}
 
 {% block main %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Admin Panel</h1>
+        <a href="/" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">Back to Home</a>
+    </div>
 
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold">Problem Reports – Admin Panel</h1>
-    <a href="/" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">Back to Home</a>
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            <button onclick="switchTab('projects')" 
+                    id="tab-projects"
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'projects' %}border-orange-500 text-orange-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                Manage Projects
+            </button>
+            <button onclick="switchTab('problems')" 
+                    id="tab-problems"
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'problems' %}border-orange-500 text-orange-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                Manage Problems
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab 1: Manage Projects -->
+    <div id="content-projects" class="tab-content {% if active_tab != 'projects' %}hidden{% endif %}">
+        <!-- Add Project Form & Excel Upload -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Add Project Form -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Project</h2>
+                    <form method="POST" action="/admin" class="space-y-4">
+                        <input type="hidden" name="action" value="add_project">
+                        <input type="hidden" name="tab" value="projects">
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label for="project_number" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Project Number <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="project_number" name="project_number" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    placeholder="e.g., PRJ-2024-001">
+                            </div>
+                            <div>
+                                <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Project Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="project_name" name="project_name" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    placeholder="e.g., Production Line Upgrade">
+                            </div>
+                            <div>
+                                <label for="manager_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Manager <span class="text-red-500">*</span>
+                                </label>
+                                <select id="manager_id" name="manager_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    <option value="">Select Manager</option>
+                                    {% for manager in managers %}
+                                        <option value="{{ manager.id }}">{{ manager.manager_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="customer_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Customer <span class="text-red-500">*</span>
+                                </label>
+                                <select id="customer_id" name="customer_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    <option value="">Select Customer</option>
+                                    {% for customer in customers %}
+                                        <option value="{{ customer.id }}">
+                                            {{ customer.customer_name }} ({{ customer.customer_country }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Quantity <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="quantity" name="quantity" required min="1"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    placeholder="e.g., 100">
+                            </div>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" 
+                                class="w-full px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition">
+                                Add Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Excel Upload -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Upload Projects from Excel</h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        Excel format: Project Number | Project Name | Manager Name | Customer Name | Quantity
+                    </p>
+                    <form method="POST" action="/admin" enctype="multipart/form-data" class="space-y-4">
+                        <input type="hidden" name="action" value="upload_excel">
+                        <input type="hidden" name="tab" value="projects">
+                        <div>
+                            <input type="file" name="excel_file" accept=".xlsx,.xls" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <button type="submit" 
+                            class="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition">
+                            Upload Excel
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Hierarchical View -->
+        <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Project Number</th>
+                        <th class="px-6 py-3 text-left">Project Name</th>
+                        <th class="px-6 py-3 text-left">Manager</th>
+                        <th class="px-6 py-3 text-left">Customer</th>
+                        <th class="px-6 py-3 text-left">Quantity</th>
+                        <th class="px-6 py-3 text-left">Problems</th>
+                        <th class="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for project in projects %}
+                    <!-- Project Row -->
+                    <tr onclick="toggleProject('{{ project.id }}')" class="hover:bg-gray-300 cursor-pointer">
+                        <td class="px-6 py-4 font-medium">{{ project.project_number }}</td>
+                        <td class="px-6 py-4">{{ project.project_name }}</td>
+                        <td class="px-6 py-4">{{ project.manager_name }}</td>
+                        <td class="px-6 py-4">
+                            {{ project.customer_name }}
+                            <div class="text-xs text-gray-500">{{ project.customer_country }}</div>
+                        </td>
+                        <td class="px-6 py-4">{{ project.quantity }}</td>
+                        <td class="px-6 py-4">
+                            {% if project.problem_count > 0 %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    {{ project.problem_count }}
+                                </span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right" onclick="event.stopPropagation();">
+                            <button 
+                                class="text-blue-600 hover:text-blue-900 mr-3 edit-project-btn"
+                                data-project-id="{{ project.id }}"
+                                data-project-number="{{ project.project_number }}"
+                                data-project-name="{{ project.project_name }}"
+                                data-manager-id="{{ project.manager_id }}"
+                                data-customer-id="{{ project.customer_id }}"
+                                data-quantity="{{ project.quantity }}">Edit</button>
+                            <form method="POST" action="/admin" class="inline"
+                                onsubmit="return confirm('Are you sure you want to delete this project?');">
+                                <input type="hidden" name="action" value="delete_project">
+                                <input type="hidden" name="tab" value="projects">
+                                <input type="hidden" name="project_id" value="{{ project.id }}">
+                                <button type="submit" 
+                                    class="text-red-600 hover:text-red-900 {% if project.problem_count > 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if project.problem_count > 0 %}disabled title="Cannot delete project with associated problems"{% endif %}>
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    
+                    <!-- Groups Row (Hidden by default) -->
+                    <tr id="project-{{ project.id }}" class="hidden">
+                        <td colspan="7" class="px-6 py-4 bg-gray-50">
+                            {% if project.groups %}
+                                <div class="space-y-4">
+                                    {% for group in project.groups %}
+                                    <!-- Group Row -->
+                                    <div class="border-l-4 border-blue-500 pl-4">
+                                        <div onclick="toggleGroup('{{ project.id }}-{{ group.id }}')" 
+                                             class="flex items-center justify-between p-3 bg-blue-50 rounded hover:bg-blue-100 cursor-pointer mb-2">
+                                            <div class="flex items-center gap-3">
+                                                <span class="font-semibold text-gray-800">Group: {{ group.group_number }}</span>
+                                                <span class="text-gray-600">- {{ group.group_name }}</span>
+                                                <span class="text-sm text-gray-500">(Engineer: {{ group.engineer_name }})</span>
+                                            </div>
+                                            <span class="text-sm text-gray-500">
+                                                {{ group.components|length }} component(s)
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Components Table (Hidden by default) -->
+                                        <div id="group-{{ project.id }}-{{ group.id }}" class="hidden ml-4 mb-4">
+                                            {% if group.components %}
+                                            <div class="overflow-x-auto">
+                                                <table class="min-w-full divide-y divide-gray-200 text-xs border border-gray-300">
+                                                    <thead class="bg-gray-200">
+                                                        <tr>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Position No</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Component No</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Component Name</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Unit Qty</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Total Qty</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Weight</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Description</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Size</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Materials</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Machine Type</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Notes</th>
+                                                            <th class="px-2 py-2 text-left border border-gray-300">Working Area</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white divide-y divide-gray-200">
+                                                        {% for comp in group.components %}
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.position_no or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300 font-medium">{{ comp.component_no or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.component_name or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300 text-center">{{ comp.unit_quantity or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300 text-center">{{ comp.total_quantity or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300 text-center">{{ comp.weight or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.description or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.size or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.materials or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.machine_type or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.notes or '-' }}</td>
+                                                            <td class="px-2 py-2 border border-gray-300">{{ comp.working_area or '-' }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {% else %}
+                                            <p class="text-sm text-gray-500 ml-4">No components in this group.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-gray-500">No groups in this project.</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab 2: Manage Problems -->
+    <div id="content-problems" class="tab-content {% if active_tab != 'problems' %}hidden{% endif %}">
+        <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left">ID</th>
+                        <th class="px-6 py-3 text-left">Project</th>
+                        <th class="px-6 py-3 text-left">Group</th>
+                        <th class="px-6 py-3 text-left">Reported By</th>
+                        <th class="px-6 py-3 text-left">Created At</th>
+                        <th class="px-6 py-3 text-left">Planned Close Date</th>
+                        <th class="px-6 py-3 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for p in reports %}
+                    <tr onclick="toggleDetails('{{ p.id }}')" class="hover:bg-gray-300 cursor-pointer">
+                        <td class="px-6 py-4 font-medium">{{ p.id }}</td>
+                        <td class="px-6 py-4">{{ p.project_number }} - {{ p.project_name }}</td>
+                        <td class="px-6 py-4">{{ p.group_name }}</td>
+                        <td class="px-6 py-4">{{ p.username }}</td>
+                        <td class="px-6 py-4">{{ p.created_at }}</td>
+                        <td class="px-6 py-4">{{ p.planned_closing_date or 'N/A' }}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="event.stopPropagation(); toggleDetails('{{ p.id }}')"
+                                class="text-blue-600 hover:text-blue-900">View Details</button>
+                        </td>
+                    </tr>
+                    <!-- Expanded Details -->
+                    <tr id="details-{{ p.id }}" class="hidden">
+                        <td colspan="7" class="p-6 bg-gray-50">
+                            <div class="space-y-4">
+                                <!-- Components -->
+                                {% if p.components %}
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 mb-2">Components</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                            <thead class="bg-gray-100">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left">Component Name</th>
+                                                    <th class="px-4 py-2 text-left">Reason</th>
+                                                    <th class="px-4 py-2 text-left">Priority</th>
+                                                    <th class="px-4 py-2 text-left">Department</th>
+                                                    <th class="px-4 py-2 text-left">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200">
+                                                {% for comp in p.components %}
+                                                <tr>
+                                                    <td class="px-4 py-2">{{ comp.component_name }}</td>
+                                                    <td class="px-4 py-2">{{ comp.reason }}</td>
+                                                    <td class="px-4 py-2">{{ comp.priority }}</td>
+                                                    <td class="px-4 py-2">{{ comp.department }}</td>
+                                                    <td class="px-4 py-2">{{ comp.action }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Steps with Status Update -->
+                                {% if p.steps %}
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 mb-2">Problem Steps</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                            <thead class="bg-gray-100">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left">Step #</th>
+                                                    <th class="px-4 py-2 text-left">DF Filename</th>
+                                                    <th class="px-4 py-2 text-left">Action</th>
+                                                    <th class="px-4 py-2 text-left">Status</th>
+                                                    <th class="px-4 py-2 text-left">Update Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200">
+                                                {% for step in p.steps %}
+                                                <tr>
+                                                    <td class="px-4 py-2">{{ step.step_number }}</td>
+                                                    <td class="px-4 py-2">{{ step.df_filename }}</td>
+                                                    <td class="px-4 py-2">{{ step.action }}</td>
+                                                    <td class="px-4 py-2">
+                                                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                                            {% if step.status == 'Finished' %}bg-green-100 text-green-800
+                                                            {% elif step.status == 'Cancel' %}bg-red-100 text-red-800
+                                                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                                            {{ step.status }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-4 py-2">
+                                                        <form method="POST" action="/admin" class="flex items-center gap-2">
+                                                            <input type="hidden" name="action" value="update_step_status">
+                                                            <input type="hidden" name="tab" value="problems">
+                                                            <input type="hidden" name="step_id" value="{{ step.id }}">
+                                                            <select name="status" 
+                                                                class="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                                                onchange="this.form.submit()">
+                                                                {% for status_opt in status_options %}
+                                                                    <option value="{{ status_opt.default }}" 
+                                                                        {% if step.status == status_opt.default %}selected{% endif %}>
+                                                                        {{ status_opt.default }}
+                                                                    </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Actions -->
+                                <div class="flex justify-end gap-2 pt-4 border-t">
+                                    <form method="POST" action="/admin" class="inline"
+                                        onsubmit="return confirm('Are you sure you want to delete this problem?');">
+                                        <input type="hidden" name="action" value="delete_problem">
+                                        <input type="hidden" name="tab" value="problems">
+                                        <input type="hidden" name="problem_id" value="{{ p.id }}">
+                                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                            Delete Problem
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="px-6 py-3 text-left">ID</th>
-                <th class="px-6 py-3 text-left">Project</th>
-                <th class="px-6 py-3 text-left">Group</th>
-                <th class="px-6 py-3 text-left">Reported By</th>
-                <th class="px-6 py-3 text-left">Created At</th>
-                <th class="px-6 py-3 text-left">Planned Close Date</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-            {% for p in reports %}
-            <tr onclick="openDetails('{{ p.problem_id }}')" class="hover:bg-gray-300">
-                <td class="px-6 py-4 font-medium">{{ p.id }}</td>
-                <td class="px-6 py-4">{{ p.project_number }} - {{ p.project_name }}</td>
-                <td class="px-6 py-4">{{ p.group_name }}</td>
-                <td class="px-6 py-4">{{ p.username }}</td>
-                <td class="px-6 py-4">{{ p.created_at }}</td>
-                <td class="px-6 py-4">
-                    <input type="date" value="{{ p.planned_closing_date }}" class="border p-1 rounded">
-                </td>
-            </tr>
-
-            <!-- Expanded Details -->
-            <tr id="details-{{ p.problem_id }}" class="hidden">
-                <td colspan="7" class="p-4 bg-gray-50">
-
-                    <!-- Toggle Button -->
-                    <button class="mb-3 px-3 py-1 flex items-end justify-end text-white bg-orange-500 rounded hover:bg-orange-600"
-                            onclick="toggleView('{{ p.problem_id }}')">
-                        Toggle View
+<!-- Edit Project Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Project</h3>
+            <form method="POST" action="/admin" id="editForm">
+                <input type="hidden" name="action" value="edit_project">
+                <input type="hidden" name="tab" value="projects">
+                <input type="hidden" name="project_id" id="edit_project_id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Number</label>
+                        <input type="text" name="project_number" id="edit_project_number" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                        <input type="text" name="project_name" id="edit_project_name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Manager</label>
+                        <select name="manager_id" id="edit_manager_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            {% for manager in managers %}
+                                <option value="{{ manager.id }}">{{ manager.manager_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                        <select name="customer_id" id="edit_customer_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}">
+                                    {{ customer.customer_name }} ({{ customer.customer_country }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                        <input type="number" name="quantity" id="edit_quantity" required min="1"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeEditModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                        Cancel
                     </button>
-
-                    <!-- Card View -->
-                    <div id="card-view-{{ p.problem_id }}">
-                        {% include "partials/admin_card_view.html" %}
-                    </div>
-
-                    <!-- Table View -->
-                    <div id="table-view-{{ p.problem_id }}" class="hidden">
-                        {% include "partials/admin_table_view.html" %}
-                    </div>
-
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <button type="submit"
+                        class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
-function openDetails(id) {
-    let row = document.getElementById("details-" + id);
-    row.classList.toggle("hidden");
+function switchTab(tab) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Show selected tab content
+    document.getElementById('content-' + tab).classList.remove('hidden');
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('border-orange-500', 'text-orange-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    const activeBtn = document.getElementById('tab-' + tab);
+    activeBtn.classList.remove('border-transparent', 'text-gray-500');
+    activeBtn.classList.add('border-orange-500', 'text-orange-600');
+    
+    // Update URL without reload
+    window.history.pushState({}, '', '/admin?tab=' + tab);
 }
 
-function toggleView(id) {
-    const card = document.getElementById("card-view-" + id);
-    const table = document.getElementById("table-view-" + id);
-    card.classList.toggle("hidden");
-    table.classList.toggle("hidden");
+function toggleProject(projectId) {
+    const row = document.getElementById('project-' + projectId);
+    row.classList.toggle('hidden');
+}
+
+function toggleGroup(groupId) {
+    const row = document.getElementById('group-' + groupId);
+    row.classList.toggle('hidden');
+}
+
+function toggleDetails(id) {
+    const row = document.getElementById('details-' + id);
+    row.classList.toggle('hidden');
+}
+
+// Handle edit project buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-project-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-project-id');
+            const number = this.getAttribute('data-project-number');
+            const name = this.getAttribute('data-project-name');
+            const managerId = this.getAttribute('data-manager-id');
+            const customerId = this.getAttribute('data-customer-id');
+            const quantity = this.getAttribute('data-quantity');
+            
+            document.getElementById('edit_project_id').value = id;
+            document.getElementById('edit_project_number').value = number;
+            document.getElementById('edit_project_name').value = name;
+            document.getElementById('edit_manager_id').value = managerId;
+            document.getElementById('edit_customer_id').value = customerId;
+            document.getElementById('edit_quantity').value = quantity;
+            document.getElementById('editModal').classList.remove('hidden');
+        });
+    });
+});
+
+function editProject(id, number, name, managerId, customerId, quantity) {
+    document.getElementById('edit_project_id').value = id;
+    document.getElementById('edit_project_number').value = number;
+    document.getElementById('edit_project_name').value = name;
+    document.getElementById('edit_manager_id').value = managerId;
+    document.getElementById('edit_customer_id').value = customerId;
+    document.getElementById('edit_quantity').value = quantity;
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target == modal) {
+        closeEditModal();
+    }
 }
 </script>
 

@@ -12,6 +12,7 @@ from dropdowns import reasons, department, action, priority, status, smth, talep
 import requests
 import re
 from collections import defaultdict
+from openpyxl import load_workbook
 # ------------------------
 # Configure application
 # ------------------------
@@ -452,34 +453,263 @@ def history():
 def admin():
     if request.method == "POST":
         action = request.form.get("action")
+        tab = request.form.get("tab", "problems")  # Default to problems tab
 
-        if action == "delete_problem":
-            pid = request.form.get("problem_id")
-            db.execute("DELETE FROM problems WHERE id = ?", pid)
-            flash(f"Problem {pid} deleted.", "success")
+        # ========== PROJECTS TAB ACTIONS ==========
+        if tab == "projects":
+            if action == "add_project":
+                project_number = request.form.get("project_number")
+                project_name = request.form.get("project_name")
+                manager_id = request.form.get("manager_id")
+                customer_id = request.form.get("customer_id")
+                quantity = request.form.get("quantity")
 
-        elif action == "update_date":
-            pid = request.form.get("problem_id")
-            new_date = request.form.get("planned_closing_date")
-            db.execute(
-                "UPDATE problems SET planned_closing_date = ? WHERE id = ?",
-                new_date, pid
-            )
-            flash(f"Updated closing date for Problem {pid}.", "success")
+                if not all([project_number, project_name, manager_id, customer_id, quantity]):
+                    flash("All fields are required.", "error")
+                    return redirect("/admin?tab=projects")
 
-        elif action == "delete_component":
-            cid = request.form.get("component_id")
-            db.execute("DELETE FROM problem_components WHERE id = ?", cid)
-            flash(f"Component {cid} deleted.", "success")
+                try:
+                    quantity = int(quantity)
+                except ValueError:
+                    flash("Quantity must be a number.", "error")
+                    return redirect("/admin?tab=projects")
 
-        elif action == "delete_step":
-            sid = request.form.get("step_id")
-            db.execute("DELETE FROM problem_steps WHERE id = ?", sid)
-            flash(f"Step {sid} deleted.", "success")
+                existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
+                if existing:
+                    flash(f"Project number '{project_number}' already exists.", "error")
+                    return redirect("/admin?tab=projects")
 
-        return redirect("/admin")
+                try:
+                    db.execute("""
+                        INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, project_number, project_name, manager_id, customer_id, quantity)
+                    flash(f"Project '{project_number}' added successfully!", "success")
+                except Exception as e:
+                    flash(f"Error adding project: {str(e)}", "error")
 
-    # --- GET: Load problem reports ---
+            elif action == "edit_project":
+                project_id = request.form.get("project_id")
+                project_number = request.form.get("project_number")
+                project_name = request.form.get("project_name")
+                manager_id = request.form.get("manager_id")
+                customer_id = request.form.get("customer_id")
+                quantity = request.form.get("quantity")
+
+                if not all([project_id, project_number, project_name, manager_id, customer_id, quantity]):
+                    flash("All fields are required.", "error")
+                    return redirect("/admin?tab=projects")
+
+                try:
+                    quantity = int(quantity)
+                    # Check if project number conflicts with another project
+                    existing = db.execute("SELECT id FROM projects WHERE project_number = ? AND id != ?", 
+                                        project_number, project_id)
+                    if existing:
+                        flash(f"Project number '{project_number}' already exists.", "error")
+                        return redirect("/admin?tab=projects")
+
+                    db.execute("""
+                        UPDATE projects 
+                        SET project_number = ?, project_name = ?, manager_id = ?, customer_id = ?, quantity = ?
+                        WHERE id = ?
+                    """, project_number, project_name, manager_id, customer_id, quantity, project_id)
+                    flash(f"Project '{project_number}' updated successfully!", "success")
+                except Exception as e:
+                    flash(f"Error updating project: {str(e)}", "error")
+
+            elif action == "delete_project":
+                project_id = request.form.get("project_id")
+                if project_id:
+                    problems = db.execute("SELECT id FROM problems WHERE project_id = ?", project_id)
+                    if problems:
+                        flash("Cannot delete project with associated problems. Please delete problems first.", "error")
+                    else:
+                        try:
+                            db.execute("DELETE FROM projects WHERE id = ?", project_id)
+                            flash("Project deleted successfully!", "success")
+                        except Exception as e:
+                            flash(f"Error deleting project: {str(e)}", "error")
+
+            elif action == "upload_excel":
+                if 'excel_file' not in request.files:
+                    flash("No file uploaded.", "error")
+                    return redirect("/admin?tab=projects")
+
+                file = request.files['excel_file']
+                if file.filename == '':
+                    flash("No file selected.", "error")
+                    return redirect("/admin?tab=projects")
+
+                if not file.filename.endswith(('.xlsx', '.xls')):
+                    flash("Please upload an Excel file (.xlsx or .xls).", "error")
+                    return redirect("/admin?tab=projects")
+
+                try:
+                    # Save temporary file
+                    temp_path = os.path.join(app.static_folder, "temp", secure_filename(file.filename))
+                    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+                    file.save(temp_path)
+
+                    # Load workbook
+                    wb = load_workbook(temp_path)
+                    ws = wb.active
+
+                    # Get managers and customers for lookup
+                    managers_dict = {m['manager_name']: m['id'] for m in db.execute("SELECT id, manager_name FROM managers")}
+                    customers_dict = {f"{c['customer_name']}": c['id'] for c in db.execute("SELECT id, customer_name FROM customers")}
+
+                    # Read rows (assuming first row is header)
+                    rows_processed = 0
+                    errors = []
+                    for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                        if not any(row):  # Skip empty rows
+                            continue
+
+                        try:
+                            project_number = str(row[0]).strip() if row[0] else None
+                            project_name = str(row[1]).strip() if row[1] else None
+                            manager_name = str(row[2]).strip() if row[2] else None
+                            customer_name = str(row[3]).strip() if row[3] else None
+                            quantity = row[4] if row[4] else None
+
+                            if not all([project_number, project_name, manager_name, customer_name, quantity]):
+                                errors.append(f"Row {idx}: Missing required fields")
+                                continue
+
+                            manager_id = managers_dict.get(manager_name)
+                            customer_id = customers_dict.get(customer_name)
+
+                            if not manager_id:
+                                errors.append(f"Row {idx}: Manager '{manager_name}' not found")
+                                continue
+                            if not customer_id:
+                                errors.append(f"Row {idx}: Customer '{customer_name}' not found")
+                                continue
+
+                            # Check if project exists
+                            existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
+                            if existing:
+                                # Update existing
+                                db.execute("""
+                                    UPDATE projects 
+                                    SET project_name = ?, manager_id = ?, customer_id = ?, quantity = ?
+                                    WHERE project_number = ?
+                                """, project_name, manager_id, customer_id, int(quantity), project_number)
+                            else:
+                                # Insert new
+                                db.execute("""
+                                    INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
+                                    VALUES (?, ?, ?, ?, ?)
+                                """, project_number, project_name, manager_id, customer_id, int(quantity))
+
+                            rows_processed += 1
+                        except Exception as e:
+                            errors.append(f"Row {idx}: {str(e)}")
+
+                    # Clean up temp file
+                    os.remove(temp_path)
+
+                    if errors:
+                        flash(f"Processed {rows_processed} rows. Errors: {'; '.join(errors[:5])}", "error")
+                    else:
+                        flash(f"Successfully processed {rows_processed} projects from Excel!", "success")
+
+                except Exception as e:
+                    flash(f"Error processing Excel file: {str(e)}", "error")
+
+            return redirect("/admin?tab=projects")
+
+        # ========== PROBLEMS TAB ACTIONS ==========
+        elif tab == "problems":
+            if action == "delete_problem":
+                pid = request.form.get("problem_id")
+                db.execute("DELETE FROM problems WHERE id = ?", pid)
+                flash(f"Problem {pid} deleted.", "success")
+
+            elif action == "update_date":
+                pid = request.form.get("problem_id")
+                new_date = request.form.get("planned_closing_date")
+                db.execute(
+                    "UPDATE problems SET planned_closing_date = ? WHERE id = ?",
+                    new_date, pid
+                )
+                flash(f"Updated closing date for Problem {pid}.", "success")
+
+            elif action == "update_step_status":
+                step_id = request.form.get("step_id")
+                new_status = request.form.get("status")
+                if step_id and new_status:
+                    db.execute("UPDATE problem_steps SET status = ? WHERE id = ?", new_status, step_id)
+                    flash("Step status updated successfully!", "success")
+
+            elif action == "delete_component":
+                cid = request.form.get("component_id")
+                db.execute("DELETE FROM problem_components WHERE id = ?", cid)
+                flash(f"Component {cid} deleted.", "success")
+
+            elif action == "delete_step":
+                sid = request.form.get("step_id")
+                db.execute("DELETE FROM problem_steps WHERE id = ?", sid)
+                flash(f"Step {sid} deleted.", "success")
+
+            return redirect("/admin?tab=problems")
+
+    # ========== GET REQUEST - LOAD DATA ==========
+    active_tab = request.args.get("tab", "problems")
+
+    # Load projects data with groups and components (for Tab 1)
+    projects_raw = db.execute("""
+        SELECT p.id, p.project_number, p.project_name, p.quantity,
+               m.id as manager_id, m.manager_name, 
+               c.id as customer_id, c.customer_name, c.customer_country,
+               COUNT(DISTINCT pr.id) as problem_count
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+        JOIN customers c ON p.customer_id = c.id
+        LEFT JOIN problems pr ON pr.project_id = p.id
+        GROUP BY p.id
+        ORDER BY p.project_number
+    """)
+    
+    # Build hierarchical structure: projects -> groups -> components
+    projects = []
+    for proj in projects_raw:
+        # Get groups for this project
+        groups_raw = db.execute("""
+            SELECT g.id, g.group_number, g.group_name, e.engineer_name, e.id as engineer_id
+            FROM groups g
+            JOIN engineers e ON g.engineer_id = e.id
+            WHERE g.project_id = ?
+            ORDER BY g.group_number
+        """, proj["id"])
+        
+        groups = []
+        for grp in groups_raw:
+            # Get components for this group
+            components = db.execute("""
+                SELECT id, position_no, component_no, component_name, unit_quantity, 
+                       total_quantity, weight, description, size, materials, 
+                       machine_type, notes, working_area
+                FROM components
+                WHERE group_id = ?
+                ORDER BY component_no
+            """, grp["id"])
+            
+            groups.append({
+                **grp,
+                "components": components
+            })
+        
+        projects.append({
+            **proj,
+            "groups": groups
+        })
+
+    managers = db.execute("SELECT id, manager_name FROM managers ORDER BY manager_name")
+    customers = db.execute("SELECT id, customer_name, customer_country FROM customers ORDER BY customer_name")
+
+    # Load problems data (for Tab 2)
     problems = db.execute("""
         SELECT p.id, p.created_at, p.planned_closing_date,
                pr.project_number, pr.project_name,
@@ -503,7 +733,7 @@ def admin():
         """, prob["id"])
 
         steps = db.execute("""
-            SELECT id, step_number, df_filename, status, action
+            SELECT id, step_number, df_filename, status, action, problem_id
             FROM problem_steps
             WHERE problem_id = ?
             ORDER BY step_number
@@ -515,8 +745,99 @@ def admin():
             "steps": steps
         })
 
-    return render_template("admin.html", reports=reports)
+    t = get_translations()
+    return render_template("admin.html", 
+                         reports=reports, 
+                         projects=projects, 
+                         managers=managers, 
+                         customers=customers,
+                         status_options=status,
+                         active_tab=active_tab,
+                         t=t)
 
+
+# -------------------- ADMIN PROJECTS --------------------
+@app.route("/admin/projects", methods=["GET", "POST"])
+@login_required
+def admin_projects():
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "add_project":
+            project_number = request.form.get("project_number")
+            project_name = request.form.get("project_name")
+            manager_id = request.form.get("manager_id")
+            customer_id = request.form.get("customer_id")
+            quantity = request.form.get("quantity")
+
+            # Validation
+            if not project_number or not project_name or not manager_id or not customer_id or not quantity:
+                flash("All fields are required.", "error")
+                return redirect("/admin/projects")
+
+            try:
+                quantity = int(quantity)
+            except ValueError:
+                flash("Quantity must be a number.", "error")
+                return redirect("/admin/projects")
+
+            # Check if project number already exists
+            existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
+            if existing:
+                flash(f"Project number '{project_number}' already exists.", "error")
+                return redirect("/admin/projects")
+
+            # Check if project name already exists
+            existing = db.execute("SELECT id FROM projects WHERE project_name = ?", project_name)
+            if existing:
+                flash(f"Project name '{project_name}' already exists.", "error")
+                return redirect("/admin/projects")
+
+            # Insert new project
+            try:
+                db.execute("""
+                    INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
+                    VALUES (?, ?, ?, ?, ?)
+                """, project_number, project_name, manager_id, customer_id, quantity)
+                flash(f"Project '{project_number}' added successfully!", "success")
+            except Exception as e:
+                flash(f"Error adding project: {str(e)}", "error")
+
+        elif action == "delete_project":
+            project_id = request.form.get("project_id")
+            if project_id:
+                # Check if project has associated problems
+                problems = db.execute("SELECT id FROM problems WHERE project_id = ?", project_id)
+                if problems:
+                    flash("Cannot delete project with associated problems. Please delete problems first.", "error")
+                else:
+                    try:
+                        db.execute("DELETE FROM projects WHERE id = ?", project_id)
+                        flash("Project deleted successfully!", "success")
+                    except Exception as e:
+                        flash(f"Error deleting project: {str(e)}", "error")
+
+        return redirect("/admin/projects")
+
+    # GET: Load all projects with related data
+    projects = db.execute("""
+        SELECT p.id, p.project_number, p.project_name, p.quantity,
+               m.manager_name, c.customer_name, c.customer_country,
+               COUNT(pr.id) as problem_count
+        FROM projects p
+        JOIN managers m ON p.manager_id = m.id
+        JOIN customers c ON p.customer_id = c.id
+        LEFT JOIN problems pr ON pr.project_id = p.id
+        GROUP BY p.id
+        ORDER BY p.project_number
+    """)
+
+    # Get dropdown data
+    managers = db.execute("SELECT id, manager_name FROM managers ORDER BY manager_name")
+    customers = db.execute("SELECT id, customer_name, customer_country FROM customers ORDER BY customer_name")
+
+    t = get_translations()
+    return render_template("admin_projects.html", projects=projects, managers=managers, customers=customers, t=t)
 
 
 
