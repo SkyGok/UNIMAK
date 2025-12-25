@@ -39,7 +39,22 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get("user_id") is None:
-            return redirect("/login")
+            return redirect("/df/login")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def admin_required(f):
+    """
+    Decorate routes to require admin role.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/df/login")
+        if session.get("role") != "admin":
+            return apology("Access denied. Admin privileges required.", 403)
         return f(*args, **kwargs)
 
     return decorated_function

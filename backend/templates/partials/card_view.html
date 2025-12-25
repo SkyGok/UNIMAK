@@ -35,7 +35,7 @@
             <span class="font-semibold text-gray-700 block mb-2">Photos for this Component:</span>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               {% for photo in c.photos %}
-                <img src="{{ url_for('static', filename='files/uploads/' ~ p.df_filename.split('.')[0] ~ '/component_' ~ c.pc_id ~ '/pictures/' ~ photo) }}" 
+                <img src="/df/uploads/{{ p.df_filename.split('.')[0] }}/component_{{ c.pc_id }}/pictures/{{ photo }}" 
                      class="rounded-lg shadow object-cover w-full h-48" alt="Component Photo">
               {% endfor %}
             </div>

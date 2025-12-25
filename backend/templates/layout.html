@@ -12,7 +12,7 @@
     <nav class="bg-white border-b shadow-sm">
         <div class="container mx-auto flex flex-wrap items-center justify-between p-4 gap-6">
             <!-- Brand -->
-            <a href="/" class="flex items-center font-bold text-xl">
+            <a href="/df/" class="flex items-center font-bold text-xl">
                 <span class="text-orange-500">U</span>
                 <span class="text-orange-500">N</span>
                 <span class="text-orange-500">I</span>
@@ -25,14 +25,16 @@
             <!-- Menu (Desktop) -->
             <div class="hidden md:flex md:items-center md:gap-6 ml-auto">
                 {% if session["user_id"] %}
-                    <a href="/upload" class="hover:text-orange-600" data-translate="nav.upload">Upload</a>
-                    <a href="/admin" class="hover:text-orange-600">Admin</a>
-                    <!-- <a href="/info" class="hover:text-orange-600" data-translate="nav.info">Info</a> -->
-                    <!-- <a href="/history" class="hover:text-orange-600" data-translate="nav.history">History</a> -->
-                    <a href="/logout" class="text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
+                    <a href="/df/upload" class="hover:text-orange-600" data-translate="nav.upload">Upload</a>
+                    {% if session.get("role") == "admin" %}
+                    <a href="/df/admin" class="hover:text-orange-600">Admin</a>
+                    {% endif %}
+                    <!-- <a href="/df/info" class="hover:text-orange-600" data-translate="nav.info">Info</a> -->
+                    <!-- <a href="/df/history" class="hover:text-orange-600" data-translate="nav.history">History</a> -->
+                    <a href="/df/logout" class="text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
                 {% else %}
-                    <a href="/register" class="hover:text-orange-600" data-translate="nav.register">Register</a>
-                    <a href="/login" class="hover:text-orange-600" data-translate="nav.login">Log In</a>
+                    <a href="/df/register" class="hover:text-orange-600" data-translate="nav.register">Register</a>
+                    <a href="/df/login" class="hover:text-orange-600" data-translate="nav.login">Log In</a>
                 {% endif %}
 
                 <!-- Desktop Language Selector -->
@@ -56,15 +58,17 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden flex-col space-y-2 px-4 pb-4 md:hidden">
             {% if session["user_id"] %}
-                <a href="/upload" class="block hover:text-orange-500" data-translate="nav.upload">Upload</a>
-                <a href="/admin" class="block hover:text-orange-500">Admin</a>
-                <a href="/projects" class="block hover:text-orange-500" data-translate="nav.projects">Projects</a>
-                <a href="/history" class="block hover:text-orange-500" data-translate="nav.history">History</a>
-                <a href="/settings" class="block hover:text-orange-500" data-translate="nav.settings">Settings</a>
-                <a href="/logout" class="block text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
+                <a href="/df/upload" class="block hover:text-orange-500" data-translate="nav.upload">Upload</a>
+                {% if session.get("role") == "admin" %}
+                <a href="/df/admin" class="block hover:text-orange-500">Admin</a>
+                {% endif %}
+                <a href="/df/projects" class="block hover:text-orange-500" data-translate="nav.projects">Projects</a>
+                <a href="/df/history" class="block hover:text-orange-500" data-translate="nav.history">History</a>
+                <a href="/df/settings" class="block hover:text-orange-500" data-translate="nav.settings">Settings</a>
+                <a href="/df/logout" class="block text-red-500 hover:text-red-600" data-translate="nav.logout">Log Out</a>
             {% else %}
-                <a href="/register" class="block hover:text-blue-600" data-translate="nav.register">Register</a>
-                <a href="/login" class="block hover:text-blue-600" data-translate="nav.login">Log In</a>
+                <a href="/df/register" class="block hover:text-blue-600" data-translate="nav.register">Register</a>
+                <a href="/df/login" class="block hover:text-blue-600" data-translate="nav.login">Log In</a>
             {% endif %}
 
             <!-- Mobile Language Selector -->

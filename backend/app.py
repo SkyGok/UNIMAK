@@ -1,45 +1,48 @@
 import os
-from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session,url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for, send_from_directory
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
-from helpers import apology, login_required, lookup, get_translations
-from flask import send_from_directory
-from flask import request, jsonify
-from dropdowns import reasons, department, action, priority, status, smth, talep  # these are just for getting the dropdown lists
+from helpers import apology, login_required, admin_required, lookup, get_translations
+from db import Database
+from dropdowns import reasons, department, action, priority, status, smth, talep
 import requests
 import re
 from collections import defaultdict
 from openpyxl import load_workbook
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # ------------------------
 # Configure application
 # ------------------------
 app = Flask(__name__)
 
-
-
-
-# serve files under static/files/uploads/<folder>/<...>
-@app.route('/static/files/uploads/<path:filename>')
-def uploaded_file(filename):
-    # Use app.static_folder, and path relative to it
-    uploads_root = os.path.join(app.static_folder, "files", "uploads")
-    # send the correct subpath
-    return send_from_directory(uploads_root, filename)
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # backend/..
-db_path = os.path.join(BASE_DIR, "/static/files", "unimak.db")
+# Set application root for /df prefix
+app.config['APPLICATION_ROOT'] = '/df'
 
 # Configure session
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 Session(app)
 
-# Connect to database
-db = SQL("sqlite:///static/files/unimak.db")
+# Connect to PostgreSQL database
+db = Database()
+
+# Create uploads directory if it doesn't exist
+# Default to a path relative to the backend directory
+UPLOADS_DIR = os.environ.get("UPLOADS_DIR", os.path.join(os.path.dirname(__file__), "static", "files", "uploads"))
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+# Serve files from /uploads
+@app.route('/df/uploads/<path:filename>')
+def uploaded_file(filename):
+    """Serve uploaded files from /uploads directory"""
+    return send_from_directory(UPLOADS_DIR, filename)
 
 # ------------------------
 # After request: prevent caching
@@ -52,9 +55,11 @@ def after_request(response):
     return response
 
 # -------------------- HOME --------------------
-@app.route("/", methods=["GET"])
+@app.route("/df/", methods=["GET"])
+@app.route("/df/df", methods=["GET"])
 @login_required
 def index():
+    user_id = session.get("user_id")
     problems = db.execute("""
         SELECT 
             p.id AS problem_id,
@@ -84,8 +89,9 @@ def index():
         LEFT JOIN problem_components pc ON pc.problem_id = p.id
         LEFT JOIN components comp ON comp.id = pc.component_id
         LEFT JOIN problem_steps ps ON ps.problem_id = p.id
+        WHERE p.user_id = %s
         ORDER BY p.created_at DESC
-    """)
+    """, user_id)
 
     problem_dict = defaultdict(lambda: {"components": []})
 
@@ -117,11 +123,10 @@ def index():
             })
 
     # Attach photos from filesystem per component
-    base_path = os.path.join(app.root_path, "static/files/uploads")
     for prob in problem_dict.values():
         df_prefix = prob["df_filename"].split(".")[0] if prob["df_filename"] else None
         if df_prefix:
-            problem_base_dir = os.path.join(base_path, df_prefix)
+            problem_base_dir = os.path.join(UPLOADS_DIR, df_prefix)
             if os.path.exists(problem_base_dir):
                 # Look for component-specific photo folders
                 for comp in prob["components"]:
@@ -138,7 +143,7 @@ def index():
 
 
 # -------------------- LOGIN --------------------
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/df/login", methods=["GET", "POST"])
 def login():
     session.clear()
     if request.method == "POST":
@@ -147,24 +152,25 @@ def login():
         elif not request.form.get("password"):
             return apology("must provide password", 400)
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE username = %s", request.form.get("username"))
         if len(rows) != 1 or not check_password_hash(rows[0]["password_hash"], request.form.get("password")):
             return apology("invalid username and/or password", 400)
 
         session["user_id"] = rows[0]["id"]
         session["language"] = rows[0].get("language", "en")
-        return redirect("/")
+        session["role"] = rows[0].get("role", "user")  # Default to 'user' if role not set
+        return redirect("/df/")
     else:
         return render_template("login.html")
 
 # -------------------- LOGOUT --------------------
-@app.route("/logout")
+@app.route("/df/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect("/df/login")
 
 # -------------------- REGISTER --------------------
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/df/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form.get("username")
@@ -175,29 +181,43 @@ def register():
             return apology("Please fill all fields", 400)
         if password != confirmation:
             return apology("Passwords do not match", 400)
-        if db.execute("SELECT * FROM users WHERE username = ?", username):
+        if db.execute("SELECT * FROM users WHERE username = %s", username):
             return apology("Username already taken", 400)
 
         hash_pw = generate_password_hash(password)
-        db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, hash_pw)
-        return redirect("/login")
+        db.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", username, hash_pw, "user")
+        return redirect("/df/login")
     else:
         return render_template("register.html")
 
 # -------------------- UPLOAD PROBLEM --------------------
-@app.route("/upload", methods=["GET", "POST"])
+@app.route("/df/upload", methods=["GET", "POST"])
 @login_required
 def upload():
+    user_id = session.get("user_id")
     # --- fetch dropdowns and DB references (always defined for GET and POST) ---
     managers = db.execute("SELECT id, manager_name, manager_mail FROM managers")
     customers = db.execute("SELECT id, customer_name, customer_country FROM customers")
-    projects = db.execute("""
-        SELECT p.id, p.project_number, p.project_name, p.quantity,
-               p.manager_id, m.manager_name, c.customer_name
-        FROM projects p
-        JOIN managers m ON p.manager_id = m.id
-        JOIN customers c ON p.customer_id = c.id
-    """)
+    # Filter projects by user_id if user is not admin
+    if session.get("role") == "admin":
+        projects = db.execute("""
+            SELECT p.id, p.project_number, p.project_name, p.quantity,
+                   p.manager_id, m.manager_name, c.customer_name
+            FROM projects p
+            JOIN managers m ON p.manager_id = m.id
+            JOIN customers c ON p.customer_id = c.id
+        """)
+    else:
+        # For non-admin users, only show projects they have access to
+        projects = db.execute("""
+            SELECT DISTINCT p.id, p.project_number, p.project_name, p.quantity,
+                   p.manager_id, m.manager_name, c.customer_name
+            FROM projects p
+            JOIN managers m ON p.manager_id = m.id
+            JOIN customers c ON p.customer_id = c.id
+            JOIN problems pr ON pr.project_id = p.id
+            WHERE pr.user_id = %s
+        """, user_id)
     groups = db.execute("""
         SELECT g.id, g.project_id, e.engineer_name,
                g.group_number, g.group_name
@@ -286,17 +306,19 @@ def upload():
         timestamp = datetime.now().strftime("%d%m%y%H%M%S")
         df_number = f"df_{timestamp}"
         folder_name = df_number
-        base_dir = os.path.join(app.static_folder, "files", "uploads", folder_name)
+        base_dir = os.path.join(UPLOADS_DIR, folder_name)
         os.makedirs(base_dir, exist_ok=True)
 
-        # ---- Insert main problems row using cs50.SQL execute (no cursor) ----
+        # ---- Insert main problems row ----
         db.execute("""
             INSERT INTO problems (project_id, group_id, user_id, planned_closing_date)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, project_id, group_id, session.get("user_id"), planned_closing_date)
 
         # get inserted problem id
-        problem_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
+        result = db.execute("SELECT id FROM problems WHERE project_id = %s AND group_id = %s AND user_id = %s ORDER BY id DESC LIMIT 1", 
+                           project_id, group_id, session.get("user_id"))
+        problem_id = result[0]["id"] if result else None
 
         # ---- Insert problem_components and problem_steps per component ----
         for idx, comp in enumerate(components_list):
@@ -311,11 +333,13 @@ def upload():
             db.execute("""
                 INSERT INTO problem_components
                 (problem_id, component_id, reason, department, action, priority, description)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, problem_id, comp_id, reason_v, department_v, action_v, priority_v, description_v)
 
             # Get the inserted problem_component id
-            problem_component_id = db.execute("SELECT last_insert_rowid() AS id")[0]["id"]
+            result = db.execute("SELECT id FROM problem_components WHERE problem_id = %s AND component_id = %s ORDER BY id DESC LIMIT 1",
+                               problem_id, comp_id)
+            problem_component_id = result[0]["id"] if result else None
 
             # ---- Save photos for this component ----
             component_photos = request.files.getlist(f"components[{idx}][photos]")
@@ -333,14 +357,11 @@ def upload():
             db.execute("""
                 INSERT INTO problem_steps
                 (problem_id, component_id, step_number, df_filename, quantity, action, status, planned_closing_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, problem_id, comp_id, 1, f"{df_number}.xlsx", 0, action_v or "Initial", "Open", planned_closing_date)
 
-        # optionally: store photo filenames somewhere (if you add a column to problems or a photos table)
-        # e.g. db.execute("UPDATE problems SET photos_id = ? WHERE id = ?", ",".join(saved_photo_filenames), problem_id)
-
         flash("Problem reported successfully!", "success")
-        return redirect("/")
+        return redirect("/df/")
 
     # GET → render upload.html
     # NOTE: pass the dropdown objects under expected names
@@ -365,10 +386,11 @@ def upload():
 
 
 # -------------------- INFO --------------------
-@app.route("/info", methods=["GET"])
+@app.route("/df/info", methods=["GET"])
 @login_required
 def info():
-    # Single query to get managers -> projects -> problems (may produce repeated project rows when multiple problems exist)
+    user_id = session.get("user_id")
+    # Single query to get managers -> projects -> problems (filtered by user_id)
     rows = db.execute("""
         SELECT
             m.id AS manager_id,
@@ -385,9 +407,9 @@ def info():
             pr.record_date
         FROM managers m
         LEFT JOIN projects p ON p.manager_id = m.id
-        LEFT JOIN problems pr ON pr.project_id = p.id
+        LEFT JOIN problems pr ON pr.project_id = p.id AND pr.user_id = %s
         ORDER BY m.manager_name, p.project_number, pr.record_date DESC
-    """)
+    """, user_id)
 
 
     # Build nested structure: { manager_name: [ { project }, { project }, ... ] }
@@ -445,7 +467,7 @@ def info():
     return render_template("info.html", data=data, t=t)
 
 # -------------------- HISTORY --------------------
-@app.route("/history", methods=["GET"])
+@app.route("/df/history", methods=["GET"])
 @login_required
 def history():
     rows = db.execute("""
@@ -461,8 +483,8 @@ def history():
 
 # -------------------- ADMIN --------------------
 
-@app.route("/admin", methods=["GET", "POST"])
-@login_required
+@app.route("/df/admin", methods=["GET", "POST"])
+@admin_required
 def admin():
     if request.method == "POST":
         action = request.form.get("action")
@@ -479,23 +501,23 @@ def admin():
 
                 if not all([project_number, project_name, manager_id, customer_id, quantity]):
                     flash("All fields are required.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 try:
                     quantity = int(quantity)
                 except ValueError:
                     flash("Quantity must be a number.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
-                existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
+                existing = db.execute("SELECT id FROM projects WHERE project_number = %s", project_number)
                 if existing:
                     flash(f"Project number '{project_number}' already exists.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 try:
                     db.execute("""
                         INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
-                        VALUES (?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s)
                     """, project_number, project_name, manager_id, customer_id, quantity)
                     flash(f"Project '{project_number}' added successfully!", "success")
                 except Exception as e:
@@ -511,21 +533,21 @@ def admin():
 
                 if not all([project_id, project_number, project_name, manager_id, customer_id, quantity]):
                     flash("All fields are required.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 try:
                     quantity = int(quantity)
                     # Check if project number conflicts with another project
-                    existing = db.execute("SELECT id FROM projects WHERE project_number = ? AND id != ?", 
+                    existing = db.execute("SELECT id FROM projects WHERE project_number = %s", 
                                         project_number, project_id)
                     if existing:
                         flash(f"Project number '{project_number}' already exists.", "error")
-                        return redirect("/admin?tab=projects")
+                        return redirect("/df/admin?tab=projects")
 
                     db.execute("""
                         UPDATE projects 
-                        SET project_number = ?, project_name = ?, manager_id = ?, customer_id = ?, quantity = ?
-                        WHERE id = ?
+                        SET project_number = %s, project_name = %s, manager_id = %s, customer_id = %s, quantity = %s
+                        WHERE id = %s
                     """, project_number, project_name, manager_id, customer_id, quantity, project_id)
                     flash(f"Project '{project_number}' updated successfully!", "success")
                 except Exception as e:
@@ -534,12 +556,12 @@ def admin():
             elif action == "delete_project":
                 project_id = request.form.get("project_id")
                 if project_id:
-                    problems = db.execute("SELECT id FROM problems WHERE project_id = ?", project_id)
+                    problems = db.execute("SELECT id FROM problems WHERE project_id = %s", project_id)
                     if problems:
                         flash("Cannot delete project with associated problems. Please delete problems first.", "error")
                     else:
                         try:
-                            db.execute("DELETE FROM projects WHERE id = ?", project_id)
+                            db.execute("DELETE FROM projects WHERE id = %s", project_id)
                             flash("Project deleted successfully!", "success")
                         except Exception as e:
                             flash(f"Error deleting project: {str(e)}", "error")
@@ -547,21 +569,22 @@ def admin():
             elif action == "upload_excel":
                 if 'excel_file' not in request.files:
                     flash("No file uploaded.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 file = request.files['excel_file']
                 if file.filename == '':
                     flash("No file selected.", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 if not file.filename.endswith(('.xlsx', '.xls')):
                     flash("Please upload an Excel file (.xlsx or .xls).", "error")
-                    return redirect("/admin?tab=projects")
+                    return redirect("/df/admin?tab=projects")
 
                 try:
                     # Save temporary file
-                    temp_path = os.path.join(app.static_folder, "temp", secure_filename(file.filename))
-                    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+                    temp_dir = os.path.join(UPLOADS_DIR, "temp")
+                    os.makedirs(temp_dir, exist_ok=True)
+                    temp_path = os.path.join(temp_dir, secure_filename(file.filename))
                     file.save(temp_path)
 
                     # Load workbook
@@ -601,19 +624,19 @@ def admin():
                                 continue
 
                             # Check if project exists
-                            existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
+                            existing = db.execute("SELECT id FROM projects WHERE project_number = %s", project_number)
                             if existing:
                                 # Update existing
                                 db.execute("""
                                     UPDATE projects 
-                                    SET project_name = ?, manager_id = ?, customer_id = ?, quantity = ?
-                                    WHERE project_number = ?
+                                    SET project_name = %s, manager_id = %s, customer_id = %s, quantity = %s
+                                    WHERE project_number = %s
                                 """, project_name, manager_id, customer_id, int(quantity), project_number)
                             else:
                                 # Insert new
                                 db.execute("""
                                     INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
-                                    VALUES (?, ?, ?, ?, ?)
+                                    VALUES (%s, %s, %s, %s, %s)
                                 """, project_number, project_name, manager_id, customer_id, int(quantity))
 
                             rows_processed += 1
@@ -631,20 +654,20 @@ def admin():
                 except Exception as e:
                     flash(f"Error processing Excel file: {str(e)}", "error")
 
-            return redirect("/admin?tab=projects")
+            return redirect("/df/admin?tab=projects")
 
         # ========== PROBLEMS TAB ACTIONS ==========
         elif tab == "problems":
             if action == "delete_problem":
                 pid = request.form.get("problem_id")
-                db.execute("DELETE FROM problems WHERE id = ?", pid)
+                db.execute("DELETE FROM problems WHERE id = %s", pid)
                 flash(f"Problem {pid} deleted.", "success")
 
             elif action == "update_date":
                 pid = request.form.get("problem_id")
                 new_date = request.form.get("planned_closing_date")
                 db.execute(
-                    "UPDATE problems SET planned_closing_date = ? WHERE id = ?",
+                    "UPDATE problems SET planned_closing_date = %s WHERE id = %s",
                     new_date, pid
                 )
                 flash(f"Updated closing date for Problem {pid}.", "success")
@@ -653,20 +676,20 @@ def admin():
                 step_id = request.form.get("step_id")
                 new_status = request.form.get("status")
                 if step_id and new_status:
-                    db.execute("UPDATE problem_steps SET status = ? WHERE id = ?", new_status, step_id)
+                    db.execute("UPDATE problem_steps SET status = %s WHERE id = %s", new_status, step_id)
                     flash("Step status updated successfully!", "success")
 
             elif action == "delete_component":
                 cid = request.form.get("component_id")
-                db.execute("DELETE FROM problem_components WHERE id = ?", cid)
+                db.execute("DELETE FROM problem_components WHERE id = %s", cid)
                 flash(f"Component {cid} deleted.", "success")
 
             elif action == "delete_step":
                 sid = request.form.get("step_id")
-                db.execute("DELETE FROM problem_steps WHERE id = ?", sid)
+                db.execute("DELETE FROM problem_steps WHERE id = %s", sid)
                 flash(f"Step {sid} deleted.", "success")
 
-            return redirect("/admin?tab=problems")
+            return redirect("/df/admin?tab=problems")
 
     # ========== GET REQUEST - LOAD DATA ==========
     active_tab = request.args.get("tab", "problems")
@@ -693,7 +716,7 @@ def admin():
             SELECT g.id, g.group_number, g.group_name, e.engineer_name, e.id as engineer_id
             FROM groups g
             JOIN engineers e ON g.engineer_id = e.id
-            WHERE g.project_id = ?
+            WHERE g.project_id = %s
             ORDER BY g.group_number
         """, proj["id"])
         
@@ -705,7 +728,7 @@ def admin():
                        total_quantity, weight, description, size, materials, 
                        machine_type, notes, working_area
                 FROM components
-                WHERE group_id = ?
+                WHERE group_id = %s
                 ORDER BY component_no
             """, grp["id"])
             
@@ -742,13 +765,13 @@ def admin():
                    pc.department, pc.action
             FROM problem_components pc
             JOIN components c ON pc.component_id = c.id
-            WHERE pc.problem_id = ?
+            WHERE pc.problem_id = %s
         """, prob["id"])
 
         steps = db.execute("""
             SELECT id, step_number, df_filename, status, action, problem_id
             FROM problem_steps
-            WHERE problem_id = ?
+            WHERE problem_id = %s
             ORDER BY step_number
         """, prob["id"])
 
@@ -769,91 +792,16 @@ def admin():
                          t=t)
 
 
-# -------------------- ADMIN PROJECTS --------------------
-@app.route("/admin/projects", methods=["GET", "POST"])
-@login_required
-def admin_projects():
-    if request.method == "POST":
-        action = request.form.get("action")
-
-        if action == "add_project":
-            project_number = request.form.get("project_number")
-            project_name = request.form.get("project_name")
-            manager_id = request.form.get("manager_id")
-            customer_id = request.form.get("customer_id")
-            quantity = request.form.get("quantity")
-
-            # Validation
-            if not project_number or not project_name or not manager_id or not customer_id or not quantity:
-                flash("All fields are required.", "error")
-                return redirect("/admin/projects")
-
-            try:
-                quantity = int(quantity)
-            except ValueError:
-                flash("Quantity must be a number.", "error")
-                return redirect("/admin/projects")
-
-            # Check if project number already exists
-            existing = db.execute("SELECT id FROM projects WHERE project_number = ?", project_number)
-            if existing:
-                flash(f"Project number '{project_number}' already exists.", "error")
-                return redirect("/admin/projects")
-
-            # Check if project name already exists
-            existing = db.execute("SELECT id FROM projects WHERE project_name = ?", project_name)
-            if existing:
-                flash(f"Project name '{project_name}' already exists.", "error")
-                return redirect("/admin/projects")
-
-            # Insert new project
-            try:
-                db.execute("""
-                    INSERT INTO projects (project_number, project_name, manager_id, customer_id, quantity)
-                    VALUES (?, ?, ?, ?, ?)
-                """, project_number, project_name, manager_id, customer_id, quantity)
-                flash(f"Project '{project_number}' added successfully!", "success")
-            except Exception as e:
-                flash(f"Error adding project: {str(e)}", "error")
-
-        elif action == "delete_project":
-            project_id = request.form.get("project_id")
-            if project_id:
-                # Check if project has associated problems
-                problems = db.execute("SELECT id FROM problems WHERE project_id = ?", project_id)
-                if problems:
-                    flash("Cannot delete project with associated problems. Please delete problems first.", "error")
-                else:
-                    try:
-                        db.execute("DELETE FROM projects WHERE id = ?", project_id)
-                        flash("Project deleted successfully!", "success")
-                    except Exception as e:
-                        flash(f"Error deleting project: {str(e)}", "error")
-
-        return redirect("/admin/projects")
-
-    # GET: Load all projects with related data
-    projects = db.execute("""
-        SELECT p.id, p.project_number, p.project_name, p.quantity,
-               m.manager_name, c.customer_name, c.customer_country,
-               COUNT(pr.id) as problem_count
-        FROM projects p
-        JOIN managers m ON p.manager_id = m.id
-        JOIN customers c ON p.customer_id = c.id
-        LEFT JOIN problems pr ON pr.project_id = p.id
-        GROUP BY p.id
-        ORDER BY p.project_number
-    """)
-
-    # Get dropdown data
-    managers = db.execute("SELECT id, manager_name FROM managers ORDER BY manager_name")
-    customers = db.execute("SELECT id, customer_name, customer_country FROM customers ORDER BY customer_name")
-
-    t = get_translations()
-    return render_template("admin_projects.html", projects=projects, managers=managers, customers=customers, t=t)
+# Redirect old admin/projects route to main admin with projects tab
+@app.route("/df/admin/projects", methods=["GET", "POST"])
+@admin_required
+def admin_projects_redirect():
+    return redirect("/df/admin?tab=projects")
 
 
 
 # -------------------- RUN APP --------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
